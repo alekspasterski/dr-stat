@@ -7,7 +7,7 @@ export default defineConfig({
     server: {
         proxy: {
             '/sysmon': {
-                target: 'backend:8000',
+                target: 'http://backend:8000',
                 changeOrigin: true,
                 secure: false,
             }
