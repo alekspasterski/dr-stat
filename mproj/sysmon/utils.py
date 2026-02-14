@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 
-def get_uptime():
+def get_uptime() -> float:
     try:
         with open("/proc/uptime", "r") as uptime_file:
-            uptime = uptime_file.read()
-        uptime = uptime.split(" ")
+            uptime: str = uptime_file.read()
+        uptime_lines: list[str] = uptime.split(" ")
     except FileNotFoundError:
-        return -1
-    return float(uptime[0]) / 60.0
+        return -1.0
+    return float(uptime_lines[0]) / 60.0
 
 # Returns various information about memory as a dictionary
-def get_memory_info():
+def get_memory_info() -> dict[str, str | float]:
     # Set defaults
-    free_memory = -1
-    total_memory = -1
+    free_memory: str = "Unknown"
+    total_memory: str = "Unknown"
     # Get the info from meminfo
     try:
         with open("/proc/meminfo", "r") as mem_file:
@@ -31,15 +31,15 @@ def get_memory_info():
     except FileNotFoundError:
         return {}
 
-def get_cpu_info():
-    avg_load = -1
+def get_cpu_info() -> dict[str, str]:
+    avg_load = "Error"
     cpu_model = "Unknown CPU"
     try:
         with open("/proc/loadavg", "r") as cpu_file:
             for line in cpu_file:
                 avg_load = line.split()[0]
     except FileNotFoundError:
-        avg_load = -1
+        avg_load = "Error"
     try:
         with open("/proc/cpuinfo", "r") as cpu_file:
             for line in cpu_file:

@@ -1,22 +1,20 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, JsonResponse
 from .utils import get_cpu_info, get_memory_info, get_uptime
 
 # Create your views here.
 
-def uptime(request):
+def uptime(request: HttpRequest) -> JsonResponse:
     # Get the uptime info
-    #r = f"Uptime: {get_uptime():.2f}m"
     return JsonResponse({
         "uptime_minutes": round(get_uptime(), 2),
         "status": "OK"
     }
     )
 
-def memory(request):
-    stats = get_memory_info()
+def memory(request: HttpRequest) -> JsonResponse:
+    stats: dict[str, str | float] = get_memory_info()
     return JsonResponse(stats)
 
-def cpu(request):
-    stats = get_cpu_info()
+def cpu(request: HttpRequest) -> JsonResponse:
+    stats: dict[str, str] = get_cpu_info()
     return JsonResponse(stats)
