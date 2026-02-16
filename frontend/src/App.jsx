@@ -12,7 +12,12 @@ function App() {
   const [cpu, setCpu] = useState({
     avg_load: -1,
     cpu_model: "",
-  })
+  });
+  const [time, setTime] = useState({
+    date_and_time: -1,
+    time_zone_name: "",
+    time_zone_offset: 0,
+  });
   useEffect(() => {
     const fetchData = () => {
     fetch("/sysmon/uptime")
@@ -26,6 +31,10 @@ function App() {
     fetch("/sysmon/cpu")
       .then(response => response.json())
       .then(data => {setCpu(data);})
+      .catch(err => console.error(err))
+    fetch("/sysmon/time")
+      .then(response => response.json())
+      .then(data => {setTime(data);})
       .catch(err => console.error(err))
 
       };
@@ -50,7 +59,11 @@ function App() {
         <p>CPU Model: {cpu.cpu_model}</p>
         <p>Load Average: {cpu.avg_load}</p>
       </InfoCard>
-      </div>
+      <InfoCard title="Time">
+        <p>Server time: {new Date(time.date_and_time).toLocaleString()}</p>
+        <p>Server timezone: {time.time_zone_name}</p>
+      </InfoCard>
+    </div>
   )
 }
 

@@ -5,6 +5,7 @@ services:
       - "8000:8000"
     volumes:
       - ./mproj:/app
+      - /etc/localtime:/etc/localtime:ro
     pid: "host"
 
   frontend:

@@ -8,4 +8,5 @@ urlpatterns = [
     path("uptime", views.uptime, name="uptime"),
     path("memory", views.memory, name="memory"),
     path("cpu", views.cpu, name="cpu"),
+    path("time", views.time, name="time"),
 ]
