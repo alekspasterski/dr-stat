@@ -15,9 +15,15 @@ def uptime(request: HttpRequest) -> JsonResponse:
     )
 
 def memory(request: HttpRequest) -> JsonResponse:
-    stats: dict[str, str | float] = get_memory_info()
-    s = MemoryData(timestamp=datetime.now(), free=stats['free_memory'], total=stats["total_memory"])
+    stats: dict[str, str | float | dict[datetime, str]] = get_memory_info()
+    historical_data = MemoryData.objects.filter(timestamp__gt=datetime.now()-timedelta(minutes=1))
+    historical_data_list = {}
+    for item in historical_data:
+        historical_data_list[item.timestamp.strftime("%Y-%m-%d %H:%M:%S")] = item.free
+
+    s: MemoryData = MemoryData(timestamp=datetime.now(), free=stats['free_memory'], total=stats["total_memory"])
     s.save()
+    stats['history'] = historical_data_list
     return JsonResponse(stats)
 
 def cpu(request: HttpRequest) -> JsonResponse:

@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import InfoCard from './InfoCard.jsx'
+import { LineChart } from '@mui/x-charts/LineChart'
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 
 function App() {
+
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
   const [uptime, setUptime] = useState("Loading...");
   const [memory, setMemory] = useState({
     free_memory: -1,
     total_memory: -1,
     used_percent: -1,
+    history: {},
   });
   const [cpu, setCpu] = useState({
     avg_load: -1,
@@ -54,6 +64,34 @@ function App() {
         <p>Total memory: {(memory.total_memory / 1024 / 1024).toFixed(2)} GB</p>
         <p>Free memory: {(memory.free_memory / 1024 / 1024).toFixed(2)} GB</p>
         <p>Percent used: {memory.used_percent.toFixed(2)} %</p>
+        {Object.keys(memory.history).length > 0 ? (
+        <ThemeProvider theme={darkTheme}>
+          <h4>Memory chart</h4>
+        <LineChart
+          xAxis={[{
+            data: Object.keys(memory.history).map(date => new Date(date)),
+            scaleType: 'time',
+            min: Object.keys(memory.history).map(date => new Date(date))[0],
+            max: Object.keys(memory.history).map(date => new Date(date))[Object.keys(memory.history).map(date => new Date(date)).length -1]
+          }]}
+          yAxis={[{
+            min: 0,
+            max: 100,
+            label: 'memory usage [%]'
+          }]}
+          series={[
+            {
+              data : Object.values(memory.history).map(mem => (100* (1 - (mem / memory.total_memory))).toFixed(2) ),
+              area : true,
+              baseline: 'min',
+            },
+          ]}
+          height={300}
+        />
+          </ThemeProvider>
+        ) : (
+          <p>Awaiting more data...</p>
+            )}
       </InfoCard>
       <InfoCard title="CPU">
         <p>CPU Model: {cpu.cpu_model}</p>
