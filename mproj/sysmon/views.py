@@ -17,7 +17,7 @@ def uptime(request: HttpRequest) -> JsonResponse:
 
 def memory(request: HttpRequest) -> JsonResponse:
     stats: dict[str, str | float | dict[datetime, str]] = get_memory_info()
-    historical_data = MemoryData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=1))
+    historical_data = MemoryData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=1)).order_by("timestamp")
     historical_data_list = {}
     for item in historical_data:
         historical_data_list[item.timestamp.isoformat()] = item.free
