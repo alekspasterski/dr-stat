@@ -84,6 +84,9 @@ function App() {
               data : Object.values(memory.history).map(mem => (100* (1 - (mem / memory.total_memory))).toFixed(2) ),
               area : true,
               baseline: 'min',
+              showMark: false,
+              valueFormatter: (v) => (v === null ? '' : `${v}%`),
+              label: 'Used memory'
             },
           ]}
           height={300}
