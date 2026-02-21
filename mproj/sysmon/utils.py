@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from datetime import datetime, tzinfo, timezone, timedelta
+from psutil import cpu_percent
+import psutil
 
 
 def get_uptime() -> float:
@@ -40,9 +42,9 @@ def get_memory_info() -> dict[str, int | float]:
             "used_percent": -1.0
         }
 
-def get_cpu_info() -> dict[str, str]:
-    avg_load = "Error"
-    cpu_model = "Unknown CPU"
+def get_cpu_info() -> dict[str, str | list[float]]:
+    avg_load : str = "Error"
+    cpu_model : str = "Unknown CPU"
     try:
         with open("/proc/loadavg", "r") as cpu_file:
             for line in cpu_file:
@@ -57,9 +59,13 @@ def get_cpu_info() -> dict[str, str]:
                     break
     except FileNotFoundError:
         cpu_model = "Unknown CPU"
+
+    cpu_usage : list[float] = psutil.cpu_percent(percpu=True)
+    
     return({
         "avg_load" : avg_load,
         "cpu_model" : cpu_model,
+        "cpu_usage" : cpu_usage,
     })
 
 def get_system_time() -> dict[str, datetime | str | timedelta | None]:

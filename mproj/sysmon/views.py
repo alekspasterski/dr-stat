@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta
 from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 
-from .models import MemoryData, CpuData
+from .models import CpuUsageData, MemoryData, CpuData
 from .utils import get_cpu_info, get_memory_info, get_system_time, get_uptime
 
 # Create your views here.
@@ -28,9 +28,13 @@ def memory(request: HttpRequest) -> JsonResponse:
     return JsonResponse(stats)
 
 def cpu(request: HttpRequest) -> JsonResponse:
-    stats: dict[str, str] = get_cpu_info()
-    s = CpuData(timestamp=timezone.now(), avg_load=stats["avg_load"])
+    stats: dict[str, str | list[float]] = get_cpu_info()
+    time = timezone.now()
+    s = CpuData(timestamp=time, avg_load=stats["avg_load"])
     s.save()
+    for i, v in enumerate(stats['cpu_usage']):
+        s2 = CpuUsageData(timestamp=time, cpu_usage=v, cpu_number=i)
+        s2.save()
     return JsonResponse(stats)
 
 def time(request: HttpRequest) -> JsonResponse:

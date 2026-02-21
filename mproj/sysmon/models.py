@@ -14,3 +14,10 @@ class CpuData(models.Model):
     avg_load = models.DecimalField(decimal_places=2, max_digits=5)
     def __str__(self):
         return self.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+class CpuUsageData(models.Model):
+    timestamp = models.DateTimeField()
+    cpu_usage = models.DecimalField(decimal_places=2, max_digits=5)
+    cpu_number = models.IntegerField()
+    def __str__(self):
+        return self.timestamp.isoformat()

@@ -22,6 +22,7 @@ function App() {
   const [cpu, setCpu] = useState({
     avg_load: -1,
     cpu_model: "",
+    cpu_usage: [],  
   });
   const [time, setTime] = useState({
     date_and_time: -1,
@@ -54,6 +55,8 @@ function App() {
     return () => clearInterval(intervalId);
   }, []);
 
+    let history = Object.keys(memory.history).map(date => new Date(date));
+
   return (
     <div style={{ padding: '50px' }}>
       <h1>System Monitor</h1>
@@ -69,10 +72,10 @@ function App() {
           <h4>Memory chart</h4>
         <LineChart
           xAxis={[{
-            data: Object.keys(memory.history).map(date => new Date(date)),
+            data: history,
             scaleType: 'time',
-            min: Object.keys(memory.history).map(date => new Date(date))[0],
-            max: Object.keys(memory.history).map(date => new Date(date))[Object.keys(memory.history).map(date => new Date(date)).length -1]
+            min: history[0],
+            max: history[history.length -1]
           }]}
           yAxis={[{
             min: 0,
@@ -86,7 +89,7 @@ function App() {
               baseline: 'min',
               showMark: false,
               valueFormatter: (v) => (v === null ? '' : `${v}%`),
-              label: 'Used memory'
+              label: 'Used memory',
             },
           ]}
           height={300}
@@ -98,7 +101,11 @@ function App() {
       </InfoCard>
       <InfoCard title="CPU">
         <p>CPU Model: {cpu.cpu_model}</p>
-        <p>Load Average: {cpu.avg_load}</p>
+          <p>Load Average: {cpu.avg_load}</p>
+          <h4>CPU Usage:</h4>
+          {cpu.cpu_usage.map((item, index) => (
+              <p key={index}>Core {index}: {item} %</p>
+          ))}
       </InfoCard>
       <InfoCard title="Time">
         <p>Server time: {new Date(time.date_and_time).toLocaleString()}</p>
