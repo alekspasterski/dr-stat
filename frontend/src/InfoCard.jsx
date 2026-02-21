@@ -2,11 +2,12 @@ function InfoCard({ title, children }) {
     const cardStyle = {
         border: '1px solid #444',
         padding: '15px',
-        margin: '10px 0',
+        marginBottom: '10px',
         borderRadius: '8px',
         backgroundColor: '#2a2a2a',
         color: '#e0e0e0',
-        fontFamily: 'monospace'
+        fontFamily: 'monospace',
+        breakInside: 'avoid',
     };
 
     return (
