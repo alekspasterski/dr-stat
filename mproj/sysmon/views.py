@@ -34,7 +34,7 @@ def cpu(request: HttpRequest) -> JsonResponse:
     all_zeroes = True
     for i, v in enumerate(stats['cpu_usage']):
         s2.append(CpuUsageData(timestamp=time, cpu_usage=v, cpu_number=i))
-        if v != "0.00":
+        if v != 0.00:
             all_zeroes = False
     if not all_zeroes:
         CpuUsageData.objects.bulk_create(s2)
