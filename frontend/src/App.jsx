@@ -76,6 +76,7 @@ function App() {
             <div className="chartsContainer">
                 {Object.keys(memory.history).length > 0 ? (
                     <ThemeProvider theme={darkTheme}>
+                        <div className="chartCard">
                         <h4>Memory chart</h4>
                         <LineChart
                             onClick={handleMemoryChartModalOpen}
@@ -102,12 +103,14 @@ function App() {
                             ]}
                             height={300}
                         />
+                            </div>
                     </ThemeProvider>
                 ) : (
                     <p>Awaiting more data...</p>
                 )}
                 {Object.keys(cpu.history).length > 0 ? (
                     <ThemeProvider theme={darkTheme}>
+                        <div className="chartCard">
                         <h4>CPU usage chart</h4>
                         <LineChart
                             onClick={handleCpuChartModalOpen}
@@ -134,6 +137,7 @@ function App() {
                                 }
                             height={300}
                         />
+                    </div>
                     </ThemeProvider>
                 ) : (
                     <p>Awaiting more data...</p>
