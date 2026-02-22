@@ -5,8 +5,6 @@ from django.utils import timezone
 from .models import CpuUsageData, MemoryData, CpuData
 from .utils import get_cpu_info, get_memory_info, get_system_time, get_uptime
 
-# Create your views here.
-
 def uptime(request: HttpRequest) -> JsonResponse:
     # Get the uptime info
     return JsonResponse({
@@ -35,6 +33,11 @@ def cpu(request: HttpRequest) -> JsonResponse:
     for i, v in enumerate(stats['cpu_usage']):
         s2 = CpuUsageData(timestamp=time, cpu_usage=v, cpu_number=i)
         s2.save()
+    historical_data = CpuUsageData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=1)).order_by("timestamp")
+    historical_data_list = {}
+    for item in historical_data:
+        historical_data_list.setdefault(item.cpu_number, {})[item.timestamp.isoformat()] = item.cpu_usage
+    stats['history'] = historical_data_list
     return JsonResponse(stats)
 
 def time(request: HttpRequest) -> JsonResponse:
