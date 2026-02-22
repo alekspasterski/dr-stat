@@ -37,8 +37,7 @@ def cpu(request: HttpRequest) -> JsonResponse:
         if v != "0.00":
             all_zeroes = False
     if not all_zeroes:
-        for r in s2:
-            r.save()
+        CpuUsageData.objects.bulk_create(s2)
     historical_data = CpuUsageData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=1)).order_by("timestamp")
     historical_data_list: dict[str, str] = {}
     for item in historical_data:
