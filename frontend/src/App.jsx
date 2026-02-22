@@ -78,6 +78,7 @@ function App() {
                     <ThemeProvider theme={darkTheme}>
                         <div className="chartCard">
                         <h4>Memory chart</h4>
+                            
                         <LineChart
                             onClick={handleMemoryChartModalOpen}
                             xAxis={[{
@@ -101,7 +102,7 @@ function App() {
                                     label: 'Used memory',
                                 },
                             ]}
-                            height={300}
+                            height={383}
                         />
                             </div>
                     </ThemeProvider>
