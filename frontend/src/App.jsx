@@ -3,6 +3,7 @@ import './App.css'
 import InfoCard from './InfoCard.jsx'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Modal } from "@mui/material";
 import CssBaseline from '@mui/material/CssBaseline';
 
 const darkTheme = createTheme({
@@ -12,7 +13,12 @@ const darkTheme = createTheme({
 });
 
 function App() {
-
+    const [memoryChartModalOpen, setMemoryChartModalOpen] = useState(false);
+    const [CpuChartModalOpen, setCpuChartModalOpen] = useState(false);
+    const handleMemoryChartModalOpen = () => setMemoryChartModalOpen(true);
+    const handleMemoryChartModalClose = () => setMemoryChartModalOpen(false);
+    const handleCpuChartModalOpen = () => setCpuChartModalOpen(true);
+    const handleCpuChartModalClose = () => setCpuChartModalOpen(false);
     const [uptime, setUptime] = useState("Loading...");
     const [memory, setMemory] = useState({
         free_memory: -1,
@@ -72,6 +78,7 @@ function App() {
                     <ThemeProvider theme={darkTheme}>
                         <h4>Memory chart</h4>
                         <LineChart
+                            onClick={handleMemoryChartModalOpen}
                             xAxis={[{
                                 data: history,
                                 scaleType: 'time',
@@ -103,6 +110,7 @@ function App() {
                     <ThemeProvider theme={darkTheme}>
                         <h4>CPU usage chart</h4>
                         <LineChart
+                            onClick={handleCpuChartModalOpen}
                             xAxis={[{
                                 data: CpuHistory,
                                 scaleType: 'time',
@@ -153,6 +161,70 @@ function App() {
                     <p>Server timezone: {time.time_zone_name}</p>
                 </InfoCard>
             </div>
+            <Modal
+                open={memoryChartModalOpen}
+                onClose={handleMemoryChartModalClose}>
+                <div className="ModalBox">
+                    <ThemeProvider theme={darkTheme}>
+                        <h4>Memory chart</h4>
+                        <LineChart
+                            xAxis={[{
+                                data: history,
+                                scaleType: 'time',
+                                min: history[0],
+                                max: history[history.length -1]
+                            }]}
+                            yAxis={[{
+                                min: 0,
+                                max: 100,
+                                label: 'memory usage [%]'
+                            }]}
+                            series={[
+                                {
+                                    data : Object.values(memory.history).map(mem => (100* (1 - (mem / memory.total_memory))).toFixed(2) ),
+                                    area : true,
+                                    baseline: 'min',
+                                    showMark: false,
+                                    valueFormatter: (v) => (v === null ? '' : `${v}%`),
+                                    label: 'Used memory',
+                                },
+                            ]}
+                        />
+                    </ThemeProvider>
+                    </div>
+            </Modal>
+            <Modal
+                open={CpuChartModalOpen}
+                onClose={handleCpuChartModalClose}>
+                <div className="ModalBox">
+                    <ThemeProvider theme={darkTheme}>
+                        <h4>CPU usage chart</h4>
+                        <LineChart
+                            xAxis={[{
+                                data: CpuHistory,
+                                scaleType: 'time',
+                                min: CpuHistory[0],
+                                max: CpuHistory[CpuHistory.length -1]
+                            }]}
+                            yAxis={[{
+                                min: 0,
+                                max: 100,
+                                label: 'CPU usage [%]'
+                            }]}
+                            series={Object.entries(cpu.history).sort(([keyA], [keyB]) =>
+                                Number(keyA) - Number(keyB)).map(([coreIndex, timeData]) => ({
+                                data :  Object.values(timeData),
+                                        area : false,
+                                        baseline: 'min',
+                                        showMark: false,
+                                        valueFormatter: (v) => (v === null ? '' : `${v}%`),
+                                        label: `Core ${coreIndex} usage`,
+                            }))
+                                }
+                        />
+                    </ThemeProvider>
+                    </div>
+            </Modal>
         </div>
     )
 }

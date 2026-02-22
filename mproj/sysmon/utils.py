@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime, tzinfo, timezone, timedelta
-from psutil import cpu_percent
+from datetime import datetime, timedelta
 import psutil
 
 

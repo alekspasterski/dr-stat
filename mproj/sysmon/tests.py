@@ -5,11 +5,11 @@ from unittest.mock import patch
 # Create your tests here.
 
 class SysmonAPITest(TestCase):
-   def setUp(self):
+   def setUp(self) -> None:
         self.client = Client()
 
    @patch('sysmon.views.get_uptime')
-   def test_uptime_endpoint(self, mock_get_uptime):
+   def test_uptime_endpoint(self, mock_get_uptime) -> None:
         mock_get_uptime.return_value = 100.0
 
         response = self.client.get(reverse("uptime"))
@@ -20,7 +20,7 @@ class SysmonAPITest(TestCase):
         self.assertEqual(data['uptime_minutes'], 100.0)
 
    @patch('sysmon.views.get_memory_info')
-   def test_memory_endpoint(self, mock_get_memory):
+   def test_memory_endpoint(self, mock_get_memory) -> None:
         mock_get_memory.return_value = {
             "free_memory" : "50000",
             "total_memory": "100000",
@@ -35,7 +35,7 @@ class SysmonAPITest(TestCase):
         self.assertEqual(response.json()['used_percent'], 50.0)
 
    @patch('sysmon.views.get_cpu_info')
-   def test_cpu_endpoint(self, mock_get_cpu):
+   def test_cpu_endpoint(self, mock_get_cpu) -> None:
         mock_get_cpu.return_value = {
             "avg_load": "0.06",
             "cpu_model": "Intel FakeCPU"
