@@ -1,5 +1,10 @@
 asgiref==3.11.1
 Django==6.0.2
 django-cors-headers==4.9.0
+django-stubs==5.2.9
+django-stubs-ext==5.2.9
+djangorestframework==3.16.1
 psutil==7.2.2
 sqlparse==0.5.5
+types-PyYAML==6.0.12.20250915
+typing_extensions==4.15.0

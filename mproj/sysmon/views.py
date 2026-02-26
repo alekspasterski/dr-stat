@@ -1,17 +1,35 @@
 from datetime import datetime, timedelta
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils import timezone
+from rest_framework.exceptions import status
 
 from .models import CpuUsageData, MemoryData, CpuData
 from .utils import get_cpu_info, get_memory_info, get_system_time, get_uptime
+from .serializer import MemorySerializer
+from rest_framework.parsers import JSONParser
+
 
 def uptime(request: HttpRequest) -> JsonResponse:
-    # Get the uptime info
     return JsonResponse({
         "uptime_minutes": round(get_uptime(), 2),
         "status": "OK"
     }
     )
+
+def memorydrf(request):
+    if request.method == 'GET':
+        mem = MemoryData.objects.all()
+        s = MemorySerializer(mem, many=True)
+        return JsonResponse(s.data, safe=False)
+
+def memorydrf_detail(request, pk):
+    if request.method == 'GET':
+        try:
+            mem = MemoryData.objects.get(pk=pk)
+        except:
+            return HttpResponse(status=404)
+        s = MemorySerializer(mem)
+        return JsonResponse(s.data)
 
 def memory(request: HttpRequest) -> JsonResponse:
     stats: dict[str, str | float | dict[str, str]] = get_memory_info()
