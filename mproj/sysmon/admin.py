@@ -16,6 +16,6 @@ class MemoryDataAdmin(admin.ModelAdmin):
 
 @admin.register(CpuUsageData)
 class CpuUsageDataAdmin(admin.ModelAdmin):
-    list_display = ('timestamp', 'cpu_usage', 'cpu_number')
-    list_filter = ('timestamp',)
-    ordering = ('-timestamp',)
+    list_display = ('id', 'cpu_usage', 'cpu_number')
+    list_filter = ('id',)
+    ordering = ('-id',)

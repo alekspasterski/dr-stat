@@ -1,12 +1,37 @@
 services:
   backend:
     build: ./mproj
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     volumes:
       - ./mproj:/app
       - /etc/localtime:/etc/localtime:ro
     pid: "host"
+
+  celery_worker:
+    build: ./mproj
+    command: celery -A monitor worker -l info
+    volumes:
+      - ./mproj:/app
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - rabbitmq
+
+  celery_beat:
+    build: ./mproj
+    command: celery -A monitor beat -l info
+    volumes:
+      - ./mproj:/app:z
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
   frontend:
     build: ./frontend

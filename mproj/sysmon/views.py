@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils import timezone
 from rest_framework.exceptions import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
-from .models import CpuUsageData, MemoryData, CpuData
-from .utils import get_cpu_info, get_memory_info, get_system_time, get_uptime
-from .serializer import MemorySerializer
+from .models import MemoryData, CpuData, CpuUsageData
+from .utils import get_system_time, get_uptime
+from .serializer import CpuDataSerializer, MemorySerializer, CpuUsageDataSerializer
 from rest_framework.parsers import JSONParser
 
 
@@ -16,52 +18,36 @@ def uptime(request: HttpRequest) -> JsonResponse:
     }
     )
 
-def memorydrf(request):
+@api_view(['GET'])
+def memory(request, format=None):
     if request.method == 'GET':
         mem = MemoryData.objects.all()
         s = MemorySerializer(mem, many=True)
-        return JsonResponse(s.data, safe=False)
+        return Response(s.data)
 
-def memorydrf_detail(request, pk):
+@api_view(['GET'])
+def memory_history(request, time, format=None):
     if request.method == 'GET':
-        try:
-            mem = MemoryData.objects.get(pk=pk)
-        except:
-            return HttpResponse(status=404)
+        mem = MemoryData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=time)).order_by("timestamp")
+        s = MemorySerializer(mem, many=True)
+        return Response(s.data)
+
+@api_view(['GET'])
+def memory_detail(request, pk, format=None):
+    try:
+        mem = MemoryData.objects.get(pk=pk)
+    except MemoryData.DoesNotExist:
+        return HttpResponse(status=404)
+    if request.method == 'GET':
         s = MemorySerializer(mem)
-        return JsonResponse(s.data)
+        return Response(s.data)
 
-def memory(request: HttpRequest) -> JsonResponse:
-    stats: dict[str, str | float | dict[str, str]] = get_memory_info()
-    historical_data = MemoryData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=1)).order_by("timestamp")
-    historical_data_list: dict[str, str] = {}
-    for item in historical_data:
-        historical_data_list[item.timestamp.isoformat()] = item.free
-
-    s: MemoryData = MemoryData(timestamp=timezone.now(), free=stats['free_memory'], total=stats["total_memory"])
-    s.save()
-    stats['history'] = historical_data_list
-    return JsonResponse(stats)
-
-def cpu(request: HttpRequest) -> JsonResponse:
-    stats: dict[str, str | list[float]] = get_cpu_info()
-    time = timezone.now()
-    s = CpuData(timestamp=time, avg_load=stats["avg_load"])
-    s.save()
-    s2 = []
-    all_zeroes = True
-    for i, v in enumerate(stats['cpu_usage']):
-        s2.append(CpuUsageData(timestamp=time, cpu_usage=v, cpu_number=i))
-        if v != 0.00:
-            all_zeroes = False
-    if not all_zeroes:
-        CpuUsageData.objects.bulk_create(s2)
-    historical_data = CpuUsageData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=1)).order_by("timestamp")
-    historical_data_list: dict[str, str] = {}
-    for item in historical_data:
-        historical_data_list.setdefault(item.cpu_number, {})[item.timestamp.isoformat()] = item.cpu_usage
-    stats['history'] = historical_data_list
-    return JsonResponse(stats)
+@api_view(['GET'])
+def cpu(request, time, format=None) -> Response:
+    if request.method == 'GET':
+        data = CpuData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=time)).order_by("timestamp")
+        s = CpuDataSerializer(data, many=True)
+        return Response(s.data)
 
 def time(request: HttpRequest) -> JsonResponse:
     system_time: dict[str, datetime | str | timedelta | None] = get_system_time()
