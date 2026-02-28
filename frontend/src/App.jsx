@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import InfoCard from './InfoCard.jsx'
+import CpuChart from './CpuChart.jsx'
+import MemoryChart from "./MemoryChart.jsx"
 import { LineChart } from '@mui/x-charts/LineChart'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Modal } from "@mui/material";
@@ -68,69 +70,18 @@ function App() {
             <div className="chartsContainer">
                 {memory.length > 0 ? (
                     <ThemeProvider theme={darkTheme}>
-                        <div className="chartCard">
-                        <h4>Memory chart</h4>
-                            
-                        <LineChart
-                            onClick={handleMemoryChartModalOpen}
-                            xAxis={[{
-                                data: history,
-                                scaleType: 'time',
-                                min: history[0],
-                                max: history[history.length-1]
-                            }]}
-                            yAxis={[{
-                                min: 0,
-                                max: 100,
-                                label: 'memory usage [%]'
-                            }]}
-                            series={[
-                                {
-                                    data : memory.map(mem => (100* (1 - (mem.free / mem.total))).toFixed(2) ),
-                                    area : true,
-                                    baseline: 'min',
-                                    showMark: false,
-                                    valueFormatter: (v) => (v === null ? '' : `${v}%`),
-                                    label: 'Used memory',
-                                },
-                            ]}
-                            height={383}
-                        />
-                            </div>
+                        <div className="chartCard" onClick={handleMemoryChartModalOpen}>
+                            <MemoryChart memory={memory} MemoryHistory={history} height={383} />
+                        </div>
                     </ThemeProvider>
                 ) : (
                     <p>Awaiting more data...</p>
                 )}
-                {Object.keys(cpu).length > 0 ? (
+                {cpu.length > 0 ? (
                     <ThemeProvider theme={darkTheme}>
-                        <div className="chartCard">
-                        <h4>CPU usage chart</h4>
-                        <LineChart
-                            onClick={handleCpuChartModalOpen}
-                            xAxis={[{
-                                data: CpuHistory,
-                                scaleType: 'time',
-                                min: CpuHistory[0],
-                                max: CpuHistory[CpuHistory.length -1]
-                            }]}
-                            yAxis={[{
-                                min: 0,
-                                max: 100,
-                                label: 'CPU usage [%]'
-                            }]}
-                            series={
-                                cpu[0].cpu_usage.map((cpuUsageData) => ({
-                                    data :  cpu.map((item) => (item.cpu_usage[cpuUsageData.cpu_number].cpu_usage)),
-                                        area : false,
-                                        baseline: 'min',
-                                        showMark: false,
-                                        valueFormatter: (v) => (v === null ? '' : `${v}%`),
-                                        label: `Core ${cpuUsageData.cpu_number} usage`,
-                            }))
-                                }
-                            height={300}
-                        />
-                    </div>
+                        <div className="chartCard" onClick={handleCpuChartModalOpen}>
+                            <CpuChart cpu={cpu} CpuHistory={CpuHistory} height={300} />
+                        </div>
                     </ThemeProvider>
                 ) : (
                     <p>Awaiting more data...</p>
@@ -141,29 +92,29 @@ function App() {
                     <p>{uptime} minutes</p>
                 </InfoCard>
                 {memory.length > 0 ? (
-                <InfoCard title="Memory">
-                    <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
-                    <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
-                    <p>Percent used: {((1 - (memory[memory.length - 1].free / memory[memory.length - 1].total)) * 100).toFixed(2)} %</p>
-                </InfoCard>
+                    <InfoCard title="Memory">
+                        <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
+                        <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
+                        <p>Percent used: {((1 - (memory[memory.length - 1].free / memory[memory.length - 1].total)) * 100).toFixed(2)} %</p>
+                    </InfoCard>
                 ) : (
-                <InfoCard title="Memory">
-                   <p>Loading...</p>
-                </InfoCard>
+                    <InfoCard title="Memory">
+                        <p>Loading...</p>
+                    </InfoCard>
                 )}
                 {cpu.length > 0 ? (
-                <InfoCard title="CPU">
-                    <p>CPU Model: {cpu.cpu_model}</p>
-                    <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
-                    <h4>CPU Usage:</h4>
-                    {cpu[cpu.length - 1].cpu_usage.map((item) => (
-                        <p key={item.cpu_number}>Core {item.cpu_number}: {item.cpu_usage} %</p>
-                    ))}
-                </InfoCard>
+                    <InfoCard title="CPU">
+                        <p>CPU Model: {cpu.cpu_model}</p>
+                        <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
+                        <h4>CPU Usage:</h4>
+                        {cpu[cpu.length - 1].cpu_usage.map((item) => (
+                            <p key={item.cpu_number}>Core {item.cpu_number}: {item.cpu_usage} %</p>
+                        ))}
+                    </InfoCard>
                 ) : (
-                <InfoCard title="CPU">
-                   <p>Loading...</p>
-                </InfoCard>
+                    <InfoCard title="CPU">
+                        <p>Loading...</p>
+                    </InfoCard>
                 )}
                 <InfoCard title="Time">
                     <p>Server time: {new Date(time.date_and_time).toLocaleString()}</p>
@@ -175,64 +126,18 @@ function App() {
                 onClose={handleMemoryChartModalClose}>
                 <div className="ModalBox">
                     <ThemeProvider theme={darkTheme}>
-                        <h4>Memory chart</h4>
-                        <LineChart
-                            xAxis={[{
-                                data: history,
-                                scaleType: 'time',
-                                min: history[0],
-                                max: history[history.length -1]
-                            }]}
-                            yAxis={[{
-                                min: 0,
-                                max: 100,
-                                label: 'memory usage [%]'
-                            }]}
-                            series={[
-                                {
-                                    data : memory.map(mem => (100* (1 - (mem.free / mem.total))).toFixed(2) ),
-                                    area : true,
-                                    baseline: 'min',
-                                    showMark: false,
-                                    valueFormatter: (v) => (v === null ? '' : `${v}%`),
-                                    label: 'Used memory',
-                                },
-                            ]}
-                        />
+                        <MemoryChart memory={memory} MemoryHistory={history} />
                     </ThemeProvider>
-                    </div>
+                </div>
             </Modal>
             <Modal
                 open={CpuChartModalOpen}
                 onClose={handleCpuChartModalClose}>
                 <div className="ModalBox">
                     <ThemeProvider theme={darkTheme}>
-                        <h4>CPU usage chart</h4>
-                        <LineChart
-                            xAxis={[{
-                                data: CpuHistory,
-                                scaleType: 'time',
-                                min: CpuHistory[0],
-                                max: CpuHistory[CpuHistory.length -1]
-                            }]}
-                            yAxis={[{
-                                min: 0,
-                                max: 100,
-                                label: 'CPU usage [%]'
-                            }]}
-                            series={
-                                cpu[0].cpu_usage.map((cpuUsageData) => ({
-                                    data :  cpu.map((item) => (item.cpu_usage[cpuUsageData.cpu_number].cpu_usage)),
-                                        area : false,
-                                        baseline: 'min',
-                                        showMark: false,
-                                        valueFormatter: (v) => (v === null ? '' : `${v}%`),
-                                        label: `Core ${cpuUsageData.cpu_number} usage`,
-                            }))
-                                }
-                        />
+                        <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
                     </ThemeProvider>
-                    </div>
+                </div>
             </Modal>
         </div>
     )
