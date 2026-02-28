@@ -7,11 +7,11 @@ from . import views
 
 urlpatterns = [
     path("uptime", views.uptime, name="uptime"),
-    path("memory", views.memory, name="memory"),
-    path("cpu/<int:time>", views.cpu, name="cpu"),
+    path("cpu/<int:time>", views.cpu, name="cpu_history"),
+    path("cpu", views.cpu, name="cpu_all"),
     path("time", views.time, name="time"),
-    path("memory/<int:pk>", views.memory_detail, name="memorydrf_detail"),
-    path("memory_history/<int:time>", views.memory_history, name="memory_history"),
+    path("memory/<int:time>", views.memory, name="memory_history"),
+    path("memory", views.memory, name="memory_all"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

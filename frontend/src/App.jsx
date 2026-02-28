@@ -13,25 +13,17 @@ const darkTheme = createTheme({
 });
 
 function App() {
+    // State for the modal windows
     const [memoryChartModalOpen, setMemoryChartModalOpen] = useState(false);
     const [CpuChartModalOpen, setCpuChartModalOpen] = useState(false);
     const handleMemoryChartModalOpen = () => setMemoryChartModalOpen(true);
     const handleMemoryChartModalClose = () => setMemoryChartModalOpen(false);
     const handleCpuChartModalOpen = () => setCpuChartModalOpen(true);
     const handleCpuChartModalClose = () => setCpuChartModalOpen(false);
+    // State for the API calls
     const [uptime, setUptime] = useState("Loading...");
-    const [memory, setMemory] = useState({
-        free_memory: -1,
-        total_memory: -1,
-        used_percent: -1,
-        history: {},
-    });
-    const [cpu, setCpu] = useState({
-        avg_load: -1,
-        cpu_model: "",
-        cpu_usage: [],
-        history: {},
-    });
+    const [memory, setMemory] = useState([]);
+    const [cpu, setCpu] = useState([]);
     const [time, setTime] = useState({
         date_and_time: -1,
         time_zone_name: "",
@@ -44,11 +36,11 @@ function App() {
                 .then(response => response.json())
                 .then(data => setUptime(data.uptime_minutes))
                 .catch(err => console.error(err))
-            fetch("/sysmon/memory")
+            fetch("/sysmon/memory/2.json")
                 .then(response => response.json())
                 .then(data => {setMemory(data);})
                 .catch(err => console.error(err))
-            fetch("/sysmon/cpu")
+            fetch("/sysmon/cpu/2.json")
                 .then(response => response.json())
                 .then(data => {setCpu(data);})
                 .catch(err => console.error(err))
@@ -60,13 +52,13 @@ function App() {
         };
         fetchData();
 
-        const intervalId = setInterval(fetchData, 3000);
+        const intervalId = setInterval(fetchData, 4000);
         return () => clearInterval(intervalId);
     }, []);
 
-    let history = Object.keys(memory.history).map(date => new Date(date));
-    let CpuHistory = Object.keys(cpu.history).length > 0 ?
-        Object.keys(Object.values(cpu.history)[0]).map(date => new Date(date)) : [];
+    let history = memory.map(memObject => new Date(memObject.timestamp));
+    let CpuHistory = Object.keys(cpu).length > 0 ?
+        Object.values(cpu).map(cpuObject => new Date(cpuObject.timestamp)) : [];
 
     return (
         <div style={{
@@ -74,7 +66,7 @@ function App() {
              }}>
             <h1>System Monitor</h1>
             <div className="chartsContainer">
-                {Object.keys(memory.history).length > 0 ? (
+                {memory.length > 0 ? (
                     <ThemeProvider theme={darkTheme}>
                         <div className="chartCard">
                         <h4>Memory chart</h4>
@@ -85,7 +77,7 @@ function App() {
                                 data: history,
                                 scaleType: 'time',
                                 min: history[0],
-                                max: history[history.length -1]
+                                max: history[history.length-1]
                             }]}
                             yAxis={[{
                                 min: 0,
@@ -94,7 +86,7 @@ function App() {
                             }]}
                             series={[
                                 {
-                                    data : Object.values(memory.history).map(mem => (100* (1 - (mem / memory.total_memory))).toFixed(2) ),
+                                    data : memory.map(mem => (100* (1 - (mem.free / mem.total))).toFixed(2) ),
                                     area : true,
                                     baseline: 'min',
                                     showMark: false,
@@ -109,7 +101,7 @@ function App() {
                 ) : (
                     <p>Awaiting more data...</p>
                 )}
-                {Object.keys(cpu.history).length > 0 ? (
+                {Object.keys(cpu).length > 0 ? (
                     <ThemeProvider theme={darkTheme}>
                         <div className="chartCard">
                         <h4>CPU usage chart</h4>
@@ -126,14 +118,14 @@ function App() {
                                 max: 100,
                                 label: 'CPU usage [%]'
                             }]}
-                            series={Object.entries(cpu.history).sort(([keyA], [keyB]) =>
-                                Number(keyA) - Number(keyB)).map(([coreIndex, timeData]) => ({
-                                data :  Object.values(timeData),
+                            series={
+                                cpu[0].cpu_usage.map((cpuUsageData) => ({
+                                    data :  cpu.map((item) => (item.cpu_usage[cpuUsageData.cpu_number].cpu_usage)),
                                         area : false,
                                         baseline: 'min',
                                         showMark: false,
                                         valueFormatter: (v) => (v === null ? '' : `${v}%`),
-                                        label: `Core ${coreIndex} usage`,
+                                        label: `Core ${cpuUsageData.cpu_number} usage`,
                             }))
                                 }
                             height={300}
@@ -148,19 +140,31 @@ function App() {
                 <InfoCard title="System Uptime">
                     <p>{uptime} minutes</p>
                 </InfoCard>
+                {memory.length > 0 ? (
                 <InfoCard title="Memory">
-                    <p>Total memory: {(memory.total_memory / 1024 / 1024).toFixed(2)} GB</p>
-                    <p>Free memory: {(memory.free_memory / 1024 / 1024).toFixed(2)} GB</p>
-                    <p>Percent used: {memory.used_percent.toFixed(2)} %</p>
+                    <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
+                    <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
+                    <p>Percent used: {((1 - (memory[memory.length - 1].free / memory[memory.length - 1].total)) * 100).toFixed(2)} %</p>
                 </InfoCard>
+                ) : (
+                <InfoCard title="Memory">
+                   <p>Loading...</p>
+                </InfoCard>
+                )}
+                {cpu.length > 0 ? (
                 <InfoCard title="CPU">
                     <p>CPU Model: {cpu.cpu_model}</p>
-                    <p>Load Average: {cpu.avg_load}</p>
+                    <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
                     <h4>CPU Usage:</h4>
-                    {cpu.cpu_usage.map((item, index) => (
-                        <p key={index}>Core {index}: {item} %</p>
+                    {cpu[cpu.length - 1].cpu_usage.map((item) => (
+                        <p key={item.cpu_number}>Core {item.cpu_number}: {item.cpu_usage} %</p>
                     ))}
                 </InfoCard>
+                ) : (
+                <InfoCard title="CPU">
+                   <p>Loading...</p>
+                </InfoCard>
+                )}
                 <InfoCard title="Time">
                     <p>Server time: {new Date(time.date_and_time).toLocaleString()}</p>
                     <p>Server timezone: {time.time_zone_name}</p>
@@ -186,7 +190,7 @@ function App() {
                             }]}
                             series={[
                                 {
-                                    data : Object.values(memory.history).map(mem => (100* (1 - (mem / memory.total_memory))).toFixed(2) ),
+                                    data : memory.map(mem => (100* (1 - (mem.free / mem.total))).toFixed(2) ),
                                     area : true,
                                     baseline: 'min',
                                     showMark: false,
@@ -216,14 +220,14 @@ function App() {
                                 max: 100,
                                 label: 'CPU usage [%]'
                             }]}
-                            series={Object.entries(cpu.history).sort(([keyA], [keyB]) =>
-                                Number(keyA) - Number(keyB)).map(([coreIndex, timeData]) => ({
-                                data :  Object.values(timeData),
+                            series={
+                                cpu[0].cpu_usage.map((cpuUsageData) => ({
+                                    data :  cpu.map((item) => (item.cpu_usage[cpuUsageData.cpu_number].cpu_usage)),
                                         area : false,
                                         baseline: 'min',
                                         showMark: false,
                                         valueFormatter: (v) => (v === null ? '' : `${v}%`),
-                                        label: `Core ${coreIndex} usage`,
+                                        label: `Core ${cpuUsageData.cpu_number} usage`,
                             }))
                                 }
                         />

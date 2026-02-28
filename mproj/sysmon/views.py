@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
+from types import NoneType
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils import timezone
 from rest_framework.exceptions import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-from .models import MemoryData, CpuData, CpuUsageData
+from .models import MemoryData, CpuData
 from .utils import get_system_time, get_uptime
-from .serializer import CpuDataSerializer, MemorySerializer, CpuUsageDataSerializer
+from .serializer import CpuDataSerializer, MemorySerializer
 from rest_framework.parsers import JSONParser
 
 
@@ -19,17 +20,14 @@ def uptime(request: HttpRequest) -> JsonResponse:
     )
 
 @api_view(['GET'])
-def memory(request, format=None):
+def memory(request, time: int | NoneType = None, format=None):
     if request.method == 'GET':
-        mem = MemoryData.objects.all()
-        s = MemorySerializer(mem, many=True)
-        return Response(s.data)
-
-@api_view(['GET'])
-def memory_history(request, time, format=None):
-    if request.method == 'GET':
-        mem = MemoryData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=time)).order_by("timestamp")
-        s = MemorySerializer(mem, many=True)
+        if time is not None:
+            data = MemoryData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=time)).order_by("timestamp")
+            s = MemorySerializer(data, many=True)
+        else:
+            data = MemoryData.objects.all()
+            s = MemorySerializer(data, many=True)
         return Response(s.data)
 
 @api_view(['GET'])
@@ -43,10 +41,14 @@ def memory_detail(request, pk, format=None):
         return Response(s.data)
 
 @api_view(['GET'])
-def cpu(request, time, format=None) -> Response:
+def cpu(request, time: int | NoneType = None, format=None) -> Response:
     if request.method == 'GET':
-        data = CpuData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=time)).order_by("timestamp")
-        s = CpuDataSerializer(data, many=True)
+        if time is not None:
+            data = CpuData.objects.filter(timestamp__gt=timezone.now()-timedelta(minutes=time)).order_by("timestamp")
+            s = CpuDataSerializer(data, many=True)
+        else:
+            data = CpuData.objects.all()
+            s = CpuDataSerializer(data, many=True)
         return Response(s.data)
 
 def time(request: HttpRequest) -> JsonResponse:
