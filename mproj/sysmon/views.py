@@ -29,16 +29,20 @@ def memory(request, time: int | NoneType = None, format=None):
             data = MemoryData.objects.all()
             s = MemorySerializer(data, many=True)
         return Response(s.data)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def memory_detail(request, pk, format=None):
     try:
         mem = MemoryData.objects.get(pk=pk)
     except MemoryData.DoesNotExist:
-        return HttpResponse(status=404)
+        return Response(status=status.HTTP_404_NOT_FOUND)
     if request.method == 'GET':
         s = MemorySerializer(mem)
         return Response(s.data)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def cpu(request, time: int | NoneType = None, format=None) -> Response:
@@ -50,6 +54,8 @@ def cpu(request, time: int | NoneType = None, format=None) -> Response:
             data = CpuData.objects.all()
             s = CpuDataSerializer(data, many=True)
         return Response(s.data)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 def time(request: HttpRequest) -> JsonResponse:
     system_time: dict[str, datetime | str | timedelta | None] = get_system_time()
