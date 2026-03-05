@@ -12,6 +12,8 @@ urlpatterns = [
     path("time", views.time, name="time"),
     path("memory/<int:time>", views.memory, name="memory_history"),
     path("memory", views.memory, name="memory_all"),
+    path("system_info", views.SystemInfoView.as_view(), name="system_info"),
+    path("disk/<int:time>", views.disk, name="disk_history"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

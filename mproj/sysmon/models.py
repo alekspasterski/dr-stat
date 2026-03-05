@@ -20,3 +20,36 @@ class CpuUsageData(models.Model):
     cpu_usage = models.DecimalField(decimal_places=2, max_digits=5)
     def __str__(self):
         return f"CPU: {self.cpu_number}, Usage: {self.cpu_usage}"
+
+class DiskData(models.Model):
+    hw_id = models.CharField(unique=True)
+    hw_id_type = models.CharField()
+    device = models.CharField()
+    active = models.BooleanField()
+    def __str__(self):
+        return self.device
+
+class PartitionData(models.Model):
+    device = models.ForeignKey(DiskData, related_name="partition_data", on_delete=models.CASCADE)
+    mount_point = models.CharField()
+    filesystem = models.CharField(null=True)
+    uuid = models.CharField(unique=True)
+    active = models.BooleanField()
+    def __str__(self):
+        return self.mount_point
+    
+class PartitionUsageData(models.Model):
+    partition = models.ForeignKey(PartitionData, related_name="partition_usage", on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    total = models.PositiveBigIntegerField()
+    free = models.PositiveBigIntegerField()
+    
+
+class DiskUsageData(models.Model):
+    device = models.ForeignKey(DiskData, related_name="disk_usage", on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    total = models.PositiveBigIntegerField()
+    read_count = models.PositiveBigIntegerField()
+    write_count = models.PositiveBigIntegerField()
+    read_bytes = models.PositiveBigIntegerField()
+    write_bytes = models.PositiveBigIntegerField()

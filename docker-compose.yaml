@@ -15,6 +15,9 @@ services:
     volumes:
       - ./mproj:/app
       - /etc/localtime:/etc/localtime:ro
+      - /run/udev:/run/udev:ro
+      - /dev/disk:/dev/disk:ro
+    privileged: true
     depends_on:
       - rabbitmq
 

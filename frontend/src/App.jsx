@@ -23,21 +23,18 @@ function App() {
     const handleCpuChartModalOpen = () => setCpuChartModalOpen(true);
     const handleCpuChartModalClose = () => setCpuChartModalOpen(false);
     // State for the API calls
-    const [uptime, setUptime] = useState("Loading...");
     const [memory, setMemory] = useState([]);
     const [cpu, setCpu] = useState([]);
-    const [time, setTime] = useState({
-        date_and_time: -1,
-        time_zone_name: "",
-        time_zone_offset: 0,
-    });
+    const [systemInfo, setSystemInfo] = useState({
+        uptime: "Loading...",
+        system_time: -1,
+        sytem_time_zone: "Loading...",
+        system_time_offset: "Loading...",
+        cpu_model: "Loading..."
+    })
     useEffect(() => {
         document.title = 'System Monitor';
         const fetchData = () => {
-            fetch("/sysmon/uptime")
-                .then(response => response.json())
-                .then(data => setUptime(data.uptime_minutes))
-                .catch(err => console.error(err))
             fetch("/sysmon/memory/2.json")
                 .then(response => response.json())
                 .then(data => {setMemory(data);})
@@ -46,9 +43,9 @@ function App() {
                 .then(response => response.json())
                 .then(data => {setCpu(data);})
                 .catch(err => console.error(err))
-            fetch("/sysmon/time")
+            fetch("/sysmon/system_info")
                 .then(response => response.json())
-                .then(data => {setTime(data);})
+                .then(data => {setSystemInfo(data);})
                 .catch(err => console.error(err))
 
         };
@@ -89,7 +86,7 @@ function App() {
             </div>
             <div className="mainContainer">
                 <InfoCard title="System Uptime">
-                    <p>{uptime} minutes</p>
+                    <p>{systemInfo['uptime']} minutes</p>
                 </InfoCard>
                 {memory.length > 0 ? (
                     <InfoCard title="Memory">
@@ -104,7 +101,7 @@ function App() {
                 )}
                 {cpu.length > 0 ? (
                     <InfoCard title="CPU">
-                        <p>CPU Model: {cpu.cpu_model}</p>
+                        <p>CPU Model: {systemInfo.cpu_model}</p>
                         <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
                         <h4>CPU Usage:</h4>
                         {cpu[cpu.length - 1].cpu_usage.map((item) => (
@@ -117,8 +114,8 @@ function App() {
                     </InfoCard>
                 )}
                 <InfoCard title="Time">
-                    <p>Server time: {new Date(time.date_and_time).toLocaleString()}</p>
-                    <p>Server timezone: {time.time_zone_name}</p>
+                    <p>Server time: {new Date(systemInfo.system_time).toLocaleString()}</p>
+                    <p>Server timezone: {systemInfo.system_time_zone}</p>
                 </InfoCard>
             </div>
             <Modal

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
 import psutil
+from platform import system
+from diskinfo import DiskInfo, disksmart
 
 
 def get_uptime() -> float:
@@ -74,3 +76,28 @@ def get_system_time() -> dict[str, datetime | str | timedelta | None]:
         "time_zone_name": current_system_time.tzname(),
         "time_zone_offset": current_system_time.utcoffset(),
     })
+
+def get_disk_info():
+    disks = DiskInfo().get_disk_list()
+    disks_return = []
+    io_counters = psutil.disk_io_counters(perdisk=True)
+    for item in disks:
+        d = {
+            "wwn": item.get_wwn(),
+            "device": item.get_name(),
+            "serial": item.get_serial_number(),
+            "size": item.get_size() * 512,
+            "read_count": io_counters[item.get_name()].read_count,
+            "write_count": io_counters[item.get_name()].write_count,
+            "read_bytes": io_counters[item.get_name()].read_bytes,
+            "write_bytes": io_counters[item.get_name()].write_bytes,
+            "partitions": [{
+                "mount_point": partition.get_fs_mounting_point(),
+                "filesystem": partition.get_fs_type(),
+                "uuid": partition.get_fs_uuid(),
+                "size": partition.get_part_size() * 512,
+                "free_space": partition.get_fs_free_size() * 512,
+            } for partition in item.get_partition_list()]
+        }
+        disks_return.append(d)
+    return disks_return
