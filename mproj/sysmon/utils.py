@@ -81,6 +81,7 @@ def get_disk_info():
     disks = DiskInfo().get_disk_list()
     disks_return = []
     io_counters = psutil.disk_io_counters(perdisk=True)
+    ps_partitions = psutil.disk_partitions(all=True)
     for item in disks:
         d = {
             "wwn": item.get_wwn(),
@@ -92,7 +93,7 @@ def get_disk_info():
             "read_bytes": io_counters[item.get_name()].read_bytes,
             "write_bytes": io_counters[item.get_name()].write_bytes,
             "partitions": [{
-                "mount_point": partition.get_fs_mounting_point(),
+                "mount_point": (mp := next((p.mountpoint for p in ps_partitions if p.device == partition.get_path() and p.mountpoint.startswith('/host')), "")) and (mp.removeprefix('/host') or '/'),
                 "filesystem": partition.get_fs_type(),
                 "uuid": partition.get_fs_uuid(),
                 "size": partition.get_part_size() * 512,

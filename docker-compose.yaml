@@ -12,12 +12,18 @@ services:
   celery_worker:
     build: ./mproj
     command: celery -A monitor worker -l info
+    environment:
+      - PROCFS_PATH=/host/proc
     volumes:
       - ./mproj:/app
       - /etc/localtime:/etc/localtime:ro
       - /run/udev:/run/udev:ro
       - /dev/disk:/dev/disk:ro
+      - /run/udev:/run/udev:ro
+      - /:/host:ro
+      - /sys:/sys:ro
     privileged: true
+    pid: "host"
     depends_on:
       - rabbitmq
 
