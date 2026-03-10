@@ -31,8 +31,9 @@ class DiskData(models.Model):
 
 class PartitionData(models.Model):
     device = models.ForeignKey(DiskData, related_name="partition_data", on_delete=models.CASCADE)
+    name = models.CharField(null=True)
     mount_point = models.CharField()
-    filesystem = models.CharField()
+    filesystem = models.CharField(null=True)
     uuid = models.CharField(unique=True)
     active = models.BooleanField()
     def __str__(self):

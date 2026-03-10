@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import InfoCard from './InfoCard.jsx'
 import CpuChart from './CpuChart.jsx'
+import DiskInfo from './DiskInfo.jsx'
+import PartitionInfo from './PartitionInfo.jsx'
 import MemoryChart from "./MemoryChart.jsx"
 import { LineChart } from '@mui/x-charts/LineChart'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -25,6 +27,7 @@ function App() {
     // State for the API calls
     const [memory, setMemory] = useState([]);
     const [cpu, setCpu] = useState([]);
+    const [disks, setDisks] = useState([]);
     const [systemInfo, setSystemInfo] = useState({
         uptime: "Loading...",
         system_time: -1,
@@ -42,6 +45,10 @@ function App() {
             fetch("/sysmon/cpu/2.json")
                 .then(response => response.json())
                 .then(data => {setCpu(data);})
+                .catch(err => console.error(err))
+            fetch("/sysmon/disk/2.json")
+                .then(response => response.json())
+                .then(data => {setDisks(data);})
                 .catch(err => console.error(err))
             fetch("/sysmon/system_info")
                 .then(response => response.json())
@@ -113,6 +120,15 @@ function App() {
                         <p>Loading...</p>
                     </InfoCard>
                 )}
+                <InfoCard title="Disks">
+                    {disks.length > 0 ? (
+                        disks.map((disk) => (
+                            <DiskInfo disk={disk} key={disk.hw_id}/>
+                        ))
+                    ) : (
+                        <p>Loading...</p>
+                    )}
+                </InfoCard>
                 <InfoCard title="Time">
                     <p>Server time: {new Date(systemInfo.system_time).toLocaleString()}</p>
                     <p>Server timezone: {systemInfo.system_time_zone}</p>

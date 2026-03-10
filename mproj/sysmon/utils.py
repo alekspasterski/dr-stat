@@ -93,6 +93,7 @@ def get_disk_info():
             "read_bytes": io_counters[item.get_name()].read_bytes,
             "write_bytes": io_counters[item.get_name()].write_bytes,
             "partitions": [{
+                "name": partition.get_name(),
                 "mount_point": (mp := next((p.mountpoint for p in ps_partitions if p.device == partition.get_path() and p.mountpoint.startswith('/host')), "")) and (mp.removeprefix('/host') or '/'),
                 "filesystem": partition.get_fs_type(),
                 "uuid": partition.get_fs_uuid(),

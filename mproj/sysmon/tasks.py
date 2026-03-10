@@ -76,6 +76,7 @@ def check_memory_and_cpu():
                     filesystem = partition['filesystem'],
                     uuid = partition['uuid'],
                     active = True,
+                    name = partition['name'],
                 )
                 active_part_uuids.append(partition['uuid'])
                 partitions.append(partitionObject)
@@ -88,7 +89,7 @@ def check_memory_and_cpu():
         partitions,
         update_conflicts=True,
         unique_fields=['uuid'],
-        update_fields=['mount_point', 'filesystem', 'active', 'device']
+        update_fields=['mount_point', 'filesystem', 'active', 'device', 'name']
     )
     DiskUsageData.objects.bulk_create(dud)
     partitionsDb = {partition.uuid: partition for partition in PartitionData.objects.all()}
