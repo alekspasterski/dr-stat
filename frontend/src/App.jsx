@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import InfoCard from './InfoCard.jsx'
 import CpuChart from './CpuChart.jsx'
+import DiskChart from './DiskChart.jsx'
 import DiskInfo from './DiskInfo.jsx'
 import PartitionInfo from './PartitionInfo.jsx'
 import MemoryChart from "./MemoryChart.jsx"
@@ -20,10 +21,13 @@ function App() {
     // State for the modal windows
     const [memoryChartModalOpen, setMemoryChartModalOpen] = useState(false);
     const [CpuChartModalOpen, setCpuChartModalOpen] = useState(false);
+    const [DiskChartModalOpen, setDiskChartModalOpen] = useState(false);
     const handleMemoryChartModalOpen = () => setMemoryChartModalOpen(true);
     const handleMemoryChartModalClose = () => setMemoryChartModalOpen(false);
     const handleCpuChartModalOpen = () => setCpuChartModalOpen(true);
     const handleCpuChartModalClose = () => setCpuChartModalOpen(false);
+    const handleDiskChartModalOpen = () => setDiskChartModalOpen(true);
+    const handleDiskChartModalClose = () => setDiskChartModalOpen(false);
     // State for the API calls
     const [memory, setMemory] = useState([]);
     const [cpu, setCpu] = useState([]);
@@ -90,6 +94,15 @@ function App() {
                 ) : (
                     <p>Awaiting more data...</p>
                 )}
+                {disks.length > 0 ? (
+                    <ThemeProvider theme={darkTheme}>
+                        <div className="chartCard" onClick={handleDiskChartModalOpen}>
+                            <DiskChart disks={disks} height={300} />
+                        </div>
+                    </ThemeProvider>
+                ) : (
+                    <p>Awaiting more data...</p>
+                )}
             </div>
             <div className="mainContainer">
                 <InfoCard title="System Uptime">
@@ -149,6 +162,15 @@ function App() {
                 <div className="ModalBox">
                     <ThemeProvider theme={darkTheme}>
                         <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
+                    </ThemeProvider>
+                </div>
+            </Modal>
+            <Modal
+                open={DiskChartModalOpen}
+                onClose={handleDiskChartModalClose}>
+                <div className="ModalBox">
+                    <ThemeProvider theme={darkTheme}>
+                        <DiskChart disks={disks}/>
                     </ThemeProvider>
                 </div>
             </Modal>
