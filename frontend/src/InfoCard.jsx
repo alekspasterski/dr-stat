@@ -1,17 +1,7 @@
 function InfoCard({ title, children }) {
-    const cardStyle = {
-        border: '1px solid #444',
-        padding: '15px',
-        marginBottom: '10px',
-        borderRadius: '8px',
-        backgroundColor: '#2a2a2a',
-        color: '#e0e0e0',
-        fontFamily: 'monospace',
-        breakInside: 'avoid',
-    };
 
     return (
-        <div style={cardStyle}>
+        <div className="infoCard">
             <h3 style={{ borderBottom: '1px solid #555', paddingBottom: '5px' }}>
                 {title}
             </h3>

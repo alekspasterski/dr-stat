@@ -45,26 +45,6 @@ h1 {
     padding-bottom: 15px;
 }
 
-@media screen and (width >= 600px) {
-    .mainContainer {
-        display: block;
-        column-gap: 20px;
-        column-count: 2;
-    }
-}
-
-@media screen and (width >= 1200px) {
-    .mainContainer {
-        display: block;
-        column-gap: 20px;
-        column-count: 3;
-    }
-    .chartsContainer {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
 .ModalBox {
   position: absolute;
   top: 50%;
@@ -88,14 +68,8 @@ h1 {
     border: 1px solid #444;
     border-radius: 10px;
     break-inside: avoid;
-    margin-bottom: 10px;
-}
-
-.chartCard:nth-child(odd) {
-    margin-right: 5px;
-}
-.chartCard:nth-child(even) {
-    margin-left: 5px;
+    width: 100%;
+    flex-grow: 1;
 }
 
 .partitionSpaceMeter {
@@ -138,7 +112,9 @@ h1 {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    word-break: break-all;
+    min-width: 0;
+    width: 10px;
+    flex: 1;
 }
 
 .infoRow {
@@ -147,6 +123,8 @@ h1 {
     flex-wrap: nowrap;
     align-items: center;
     gap: 10px;
+    width: 100%;
+    min-width: 0;
 }
 
 .partitionCardContents {
@@ -183,4 +161,46 @@ h1 {
     font-weight: bold;
     z-index: 2;
     text-shadow: 1px 1px 2px black;
+}
+
+.chartsContainer {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-basis: auto;
+    margin-bottom: 10px;
+}
+
+.infoCard {
+    border: 1px solid #444;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    font-family: monospace;
+    break-inside: avoid;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mainContainer {
+    display: block;
+    column-count: 1;
+    column-gap: 10px;
+}
+
+@media screen and (width >= 600px) {
+    .mainContainer {
+        column-count: 2;
+    }
+}
+
+@media screen and (width >= 1200px) {
+    .mainContainer {
+        column-count: 3;
+    }
+    .chartCard {
+        width: calc(50% - 10px);
+    }
 }
