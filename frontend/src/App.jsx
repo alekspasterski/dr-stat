@@ -40,7 +40,7 @@ function App() {
                     return response.json();
                 }
                 else {
-                    setLoginFailed("Invalid username or password.fdggdfgfdgfgdfddfgfgdfgdfg");
+                    setLoginFailed("Invalid username or password.");
                     throw new Error("credentials_rejected");
                 }
             })
@@ -273,6 +273,7 @@ function App() {
     } else {
         return (
             <>
+                {loginFailed && <div className="loginError"><p>{loginFailed}</p></div>}
                 <Login action={fetchAPIToken} loginFailed={loginFailed} />
             </>
         )
