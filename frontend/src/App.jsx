@@ -102,48 +102,35 @@ function App() {
     useEffect(() => {
         if (loggedIn) {
             document.title = 'System Monitor';
-            const fetchData = () => {
-                fetch("/sysmon/memory/2.json", {
+            const fetchData = (url, setter) => {
+                fetch(url, {
                     headers: {
                         "Authorization": "Bearer " + token,
                     },
                     credentials: "include",
                 })
-                    .then(response => response.json())
-                    .then(data => { setMemory(data); })
+                    .then(response => {
+                        if (response.status === 401) {
+                            refreshAPIToken();
+                            throw new Error("Token Expired");
+                        }
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+                        return response.json();})
+                    .then(data => { setter(data); })
                     .catch(err => console.error(err))
-                fetch("/sysmon/cpu/2.json", {
-                    headers: {
-                        "Authorization": "Bearer " + token,
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => { setCpu(data); })
-                    .catch(err => console.error(err))
-                fetch("/sysmon/disk/2.json", {
-                    headers: {
-                        "Authorization": "Bearer " + token,
-                    },
-                    credentials: "include",
-                })
-                    .then(response => response.json())
-                    .then(data => { setDisks(data); })
-                    .catch(err => console.error(err))
-                fetch("/sysmon/system_info", {
-                    headers: {
-                        "Authorization": "Bearer " + token,
-                    },
-                    credentials: "include",
-                })
-                    .then(response => response.json())
-                    .then(data => { setSystemInfo(data); })
-                    .catch(err => console.error(err))
-
             };
-            fetchData();
+            const fetchStats = () => {
+            fetchData('/sysmon/memory/2.json', setMemory);
+            fetchData('/sysmon/cpu/2.json', setCpu);
+            fetchData('/sysmon/disk/2.json', setDisks);
+            fetchData('/sysmon/system_info', setSystemInfo);
+            };
+            fetchStats();
             
 
-            const intervalId = setInterval(fetchData, 4000);
+            const intervalId = setInterval(fetchStats, 4000);
             const refreshId = setInterval(refreshAPIToken, 60000);
             return () => {
                 clearInterval(intervalId);

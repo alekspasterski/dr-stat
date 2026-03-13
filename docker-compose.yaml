@@ -8,6 +8,8 @@ services:
       - ./mproj:/app
       - /etc/localtime:/etc/localtime:ro
     pid: "host"
+    env_file:
+      - .env
 
   celery_worker:
     build: ./mproj
@@ -23,6 +25,8 @@ services:
       - /:/host:ro
       - /sys:/sys:ro
     privileged: true
+    env_file:
+      - .env
     pid: "host"
     depends_on:
       - rabbitmq
@@ -33,6 +37,8 @@ services:
     volumes:
       - ./mproj:/app:z
       - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
 
