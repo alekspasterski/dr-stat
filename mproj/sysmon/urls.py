@@ -17,6 +17,7 @@ urlpatterns = [
     path("disk/<int:time>", views.disk, name="disk_history"),
     path("token/", views.CookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", views.CookieTokenRefreshView.as_view(), name="token_refresh"),
+    path("logout/", views.logout, name="logout"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

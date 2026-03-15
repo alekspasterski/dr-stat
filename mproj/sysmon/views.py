@@ -15,8 +15,8 @@ from .utils import get_cpu_info, get_system_time, get_uptime
 from .serializer import CpuDataSerializer, MemorySerializer, SystemInfoSerializer, DiskDataSerializer
 
 @api_view(['GET'])
-def uptime(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({
+def uptime(request: Request) -> Response:
+    return Response({
         "uptime_minutes": round(get_uptime(), 2),
         "status": "OK"
     }
@@ -90,12 +90,12 @@ def disk(request, time: int | NoneType = None, format=None) -> Response:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-def time(request: HttpRequest) -> JsonResponse:
+def time(request: Request) -> Response:
     system_time: dict[str, datetime | str | timedelta | None] = get_system_time()
-    return JsonResponse(system_time)
+    return Response(system_time)
 
 class SystemInfoView(APIView):
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         system_time: dict[str, datetime | str | timedelta | None] = get_system_time()
         uptime = round(get_uptime(), 2)
         data = {
@@ -109,7 +109,7 @@ class SystemInfoView(APIView):
         return Response(s.data)
 
 class CookieTokenObtainPairView(TokenObtainPairView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
             refresh_token = response.data.get('refresh')
@@ -127,3 +127,9 @@ class CookieTokenRefreshView(TokenRefreshView):
         if refresh_token:
             request.data['refresh'] = refresh_token
         return super().post(request, *args, **kwargs)
+
+@api_view(['GET'])
+def logout(request: Request) -> Response:
+    response = Response(status=status.HTTP_200_OK)
+    response.delete_cookie('refresh_token')
+    return response

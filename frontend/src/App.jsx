@@ -4,6 +4,7 @@ import InfoCard from './InfoCard.jsx'
 import CpuChart from './CpuChart.jsx'
 import DiskChart from './DiskChart.jsx'
 import DiskInfo from './DiskInfo.jsx'
+import Bar from './Bar.jsx'
 import PartitionInfo from './PartitionInfo.jsx'
 import MemoryChart from "./MemoryChart.jsx"
 import Login from './Login.jsx'
@@ -99,6 +100,7 @@ function App() {
             setIsCheckingAuth(false);
         })
     }, []) // Run only once
+    const loggedIn = Boolean(token);
     useEffect(() => {
         if (loggedIn) {
             document.title = 'System Monitor';
@@ -117,18 +119,19 @@ function App() {
                         if (!response.ok) {
                             throw new Error(response.statusText);
                         }
-                        return response.json();})
+                        return response.json();
+                    })
                     .then(data => { setter(data); })
                     .catch(err => console.error(err))
             };
             const fetchStats = () => {
-            fetchData('/sysmon/memory/2.json', setMemory);
-            fetchData('/sysmon/cpu/2.json', setCpu);
-            fetchData('/sysmon/disk/2.json', setDisks);
-            fetchData('/sysmon/system_info', setSystemInfo);
+                fetchData('/sysmon/memory/2.json', setMemory);
+                fetchData('/sysmon/cpu/2.json', setCpu);
+                fetchData('/sysmon/disk/2.json', setDisks);
+                fetchData('/sysmon/system_info', setSystemInfo);
             };
             fetchStats();
-            
+
 
             const intervalId = setInterval(fetchStats, 4000);
             const refreshId = setInterval(refreshAPIToken, 60000);
@@ -139,8 +142,17 @@ function App() {
         }
     }, [token]);
 
-    const loggedIn = Boolean(token);
-    
+    const logout = () => {
+        fetch('/sysmon/logout/', {
+            headers: {
+                "Authorization": "Bearer " + token,
+            },
+            credentials: "include",
+        }).then(() => {
+            setToken("");
+        }).catch((err) => console.log(err))
+    }
+
     if (isCheckingAuth) {
         // Loading...
         return (<p>Loading...</p>)
@@ -152,109 +164,110 @@ function App() {
             Object.values(cpu).map(cpuObject => new Date(cpuObject.timestamp)) : [];
 
         return (
-            <div style={{
-                padding: '10px',
-            }}>
-                <h1>System Monitor</h1>
-                <div className="chartsContainer">
-                    {memory.length > 0 ? (
-                        <ThemeProvider theme={darkTheme}>
-                            <div className="chartCard" onClick={handleMemoryChartModalOpen}>
-                                <MemoryChart memory={memory} MemoryHistory={history} height={383} />
-                            </div>
-                        </ThemeProvider>
-                    ) : (
-                        <p>Awaiting more data...</p>
-                    )}
-                    {cpu.length > 0 ? (
-                        <ThemeProvider theme={darkTheme}>
-                            <div className="chartCard" onClick={handleCpuChartModalOpen}>
-                                <CpuChart cpu={cpu} CpuHistory={CpuHistory} height={300} />
-                            </div>
-                        </ThemeProvider>
-                    ) : (
-                        <p>Awaiting more data...</p>
-                    )}
-                    {disks.length > 0 ? (
-                        <ThemeProvider theme={darkTheme}>
-                            <div className="chartCard" onClick={handleDiskChartModalOpen}>
-                                <DiskChart disks={disks} height={300} />
-                            </div>
-                        </ThemeProvider>
-                    ) : (
-                        <p>Awaiting more data...</p>
-                    )}
-                </div>
-                <div className="mainContainer">
-                    <InfoCard title="System Uptime">
-                        <p>{systemInfo['uptime']} minutes</p>
-                    </InfoCard>
-                    {memory.length > 0 ? (
-                        <InfoCard title="Memory">
-                            <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
-                            <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
-                            <p>Percent used: {((1 - (memory[memory.length - 1].free / memory[memory.length - 1].total)) * 100).toFixed(2)} %</p>
-                        </InfoCard>
-                    ) : (
-                        <InfoCard title="Memory">
-                            <p>Loading...</p>
-                        </InfoCard>
-                    )}
-                    {cpu.length > 0 ? (
-                        <InfoCard title="CPU">
-                            <p>CPU Model: {systemInfo.cpu_model}</p>
-                            <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
-                            <h4>CPU Usage:</h4>
-                            {cpu[cpu.length - 1].cpu_usage.map((item) => (
-                                <p key={item.cpu_number}>Core {item.cpu_number}: {item.cpu_usage} %</p>
-                            ))}
-                        </InfoCard>
-                    ) : (
-                        <InfoCard title="CPU">
-                            <p>Loading...</p>
-                        </InfoCard>
-                    )}
-                    <InfoCard title="Disks">
-                        {disks.length > 0 ? (
-                            disks.map((disk) => (
-                                <DiskInfo disk={disk} key={disk.hw_id} />
-                            ))
+            <div className="topContainer">
+                <Bar logoutFunction={logout}/>
+                <div className="monitorContainer">
+                    <h1>System Monitor</h1>
+                    <div className="chartsContainer">
+                        {memory.length > 0 ? (
+                            <ThemeProvider theme={darkTheme}>
+                                <div className="chartCard" onClick={handleMemoryChartModalOpen}>
+                                    <MemoryChart memory={memory} MemoryHistory={history} height={383} />
+                                </div>
+                            </ThemeProvider>
                         ) : (
-                            <p>Loading...</p>
+                            <p>Awaiting more data...</p>
                         )}
-                    </InfoCard>
-                    <InfoCard title="Time">
-                        <p>Server time: {new Date(systemInfo.system_time).toLocaleString()}</p>
-                        <p>Server timezone: {systemInfo.system_time_zone}</p>
-                    </InfoCard>
+                        {cpu.length > 0 ? (
+                            <ThemeProvider theme={darkTheme}>
+                                <div className="chartCard" onClick={handleCpuChartModalOpen}>
+                                    <CpuChart cpu={cpu} CpuHistory={CpuHistory} height={300} />
+                                </div>
+                            </ThemeProvider>
+                        ) : (
+                            <p>Awaiting more data...</p>
+                        )}
+                        {disks.length > 0 ? (
+                            <ThemeProvider theme={darkTheme}>
+                                <div className="chartCard" onClick={handleDiskChartModalOpen}>
+                                    <DiskChart disks={disks} height={300} />
+                                </div>
+                            </ThemeProvider>
+                        ) : (
+                            <p>Awaiting more data...</p>
+                        )}
+                    </div>
+                    <div className="mainContainer">
+                        <InfoCard title="System Uptime">
+                            <p>{systemInfo['uptime']} minutes</p>
+                        </InfoCard>
+                        {memory.length > 0 ? (
+                            <InfoCard title="Memory">
+                                <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
+                                <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
+                                <p>Percent used: {((1 - (memory[memory.length - 1].free / memory[memory.length - 1].total)) * 100).toFixed(2)} %</p>
+                            </InfoCard>
+                        ) : (
+                            <InfoCard title="Memory">
+                                <p>Loading...</p>
+                            </InfoCard>
+                        )}
+                        {cpu.length > 0 ? (
+                            <InfoCard title="CPU">
+                                <p>CPU Model: {systemInfo.cpu_model}</p>
+                                <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
+                                <h4>CPU Usage:</h4>
+                                {cpu[cpu.length - 1].cpu_usage.map((item) => (
+                                    <p key={item.cpu_number}>Core {item.cpu_number}: {item.cpu_usage} %</p>
+                                ))}
+                            </InfoCard>
+                        ) : (
+                            <InfoCard title="CPU">
+                                <p>Loading...</p>
+                            </InfoCard>
+                        )}
+                        <InfoCard title="Disks">
+                            {disks.length > 0 ? (
+                                disks.map((disk) => (
+                                    <DiskInfo disk={disk} key={disk.hw_id} />
+                                ))
+                            ) : (
+                                <p>Loading...</p>
+                            )}
+                        </InfoCard>
+                        <InfoCard title="Time">
+                            <p>Server time: {new Date(systemInfo.system_time).toLocaleString()}</p>
+                            <p>Server timezone: {systemInfo.system_time_zone}</p>
+                        </InfoCard>
+                    </div>
+                    <Modal
+                        open={memoryChartModalOpen}
+                        onClose={handleMemoryChartModalClose}>
+                        <div className="ModalBox">
+                            <ThemeProvider theme={darkTheme}>
+                                <MemoryChart memory={memory} MemoryHistory={history} />
+                            </ThemeProvider>
+                        </div>
+                    </Modal>
+                    <Modal
+                        open={CpuChartModalOpen}
+                        onClose={handleCpuChartModalClose}>
+                        <div className="ModalBox">
+                            <ThemeProvider theme={darkTheme}>
+                                <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
+                            </ThemeProvider>
+                        </div>
+                    </Modal>
+                    <Modal
+                        open={DiskChartModalOpen}
+                        onClose={handleDiskChartModalClose}>
+                        <div className="ModalBox">
+                            <ThemeProvider theme={darkTheme}>
+                                <DiskChart disks={disks} />
+                            </ThemeProvider>
+                        </div>
+                    </Modal>
                 </div>
-                <Modal
-                    open={memoryChartModalOpen}
-                    onClose={handleMemoryChartModalClose}>
-                    <div className="ModalBox">
-                        <ThemeProvider theme={darkTheme}>
-                            <MemoryChart memory={memory} MemoryHistory={history} />
-                        </ThemeProvider>
-                    </div>
-                </Modal>
-                <Modal
-                    open={CpuChartModalOpen}
-                    onClose={handleCpuChartModalClose}>
-                    <div className="ModalBox">
-                        <ThemeProvider theme={darkTheme}>
-                            <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
-                        </ThemeProvider>
-                    </div>
-                </Modal>
-                <Modal
-                    open={DiskChartModalOpen}
-                    onClose={handleDiskChartModalClose}>
-                    <div className="ModalBox">
-                        <ThemeProvider theme={darkTheme}>
-                            <DiskChart disks={disks} />
-                        </ThemeProvider>
-                    </div>
-                </Modal>
             </div>
         )
     } else {
