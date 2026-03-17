@@ -1,4 +1,5 @@
 import PartitionInfo from './PartitionInfo.jsx'
+import FilesystemInfo from './FilesystemInfo.jsx';
 function DiskInfo({disk}) {
     let writes_p_s_b;
     let reads_p_s_b;
@@ -25,15 +26,21 @@ function DiskInfo({disk}) {
                 <div className="infoRow">
                     <span className="diskLabel">Read: </span><span title="reads" className="diskId">{(reads_p_s_b / 1024 / 1024).toFixed(2)} MBps</span>
                 </div>
+                <div className="infoRow">
+                    <span className="diskLabel">Size [GB]: </span><span title="reads" className="diskId">{(last.total / 1024 / 1024 / 1024).toFixed(2)}</span>
+                </div>
                 </>
             ) : (
                 <p>Loading data...</p>
             )}
-            {disk.partition_data.map((partition, index) => {
+            {disk.filesystem_data ? (
+                <FilesystemInfo filesystem={disk.filesystem_data} />
+            ) : (
+            disk.partition_data.map((partition, index) => {
                 return (
                     <PartitionInfo partition={partition} index={index+1} key={partition.uuid}/>
                 )
-            })}
+            }))}
         </div>
     );
 }

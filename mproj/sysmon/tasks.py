@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from celery import shared_task
 from .utils import get_memory_info, get_cpu_info, get_disk_info
-from .models import MemoryData, CpuData, CpuUsageData, DiskData, DiskUsageData, PartitionData, PartitionUsageData
+from .models import MemoryData, CpuData, CpuUsageData, DiskData, DiskUsageData, PartitionData, FilesystemData, FilesystemUsageData
 from django.utils import timezone
 
 
@@ -26,12 +26,14 @@ def check_memory_and_cpu():
         CpuUsageData.objects.bulk_create(s2)
     # Check disk data
     dud = []
-    pud = []
+    fud = []
     disks = []
     partitions = []
     statsDisk = get_disk_info()
     active_hw_ids = []
     active_part_uuids = []
+    filesystems = []
+    active_fs_uuids = []
     for disk in statsDisk:
         hw_id = disk['wwn'] or disk['serial'] or disk['device']
         active_hw_ids.append(hw_id)
@@ -56,8 +58,8 @@ def check_memory_and_cpu():
     )
             
     disksDb = {disk.hw_id: disk for disk in DiskData.objects.all()}
+    
     for disk in statsDisk:
-#        hw_id = disk['wwn'] if disk['wwn'] != '' else disk['serial']
         hw_id = disk['wwn'] or disk['serial'] or disk['device']
         dud.append(DiskUsageData(
             device = disksDb[hw_id],
@@ -72,11 +74,10 @@ def check_memory_and_cpu():
             if partition['uuid']:
                 partitionObject = PartitionData(
                     device = disksDb[hw_id],
-                    mount_point = partition['mount_point'],
-                    filesystem = partition['filesystem'],
                     uuid = partition['uuid'],
                     active = True,
                     name = partition['name'],
+                    total = partition['size'],
                 )
                 active_part_uuids.append(partition['uuid'])
                 partitions.append(partitionObject)
@@ -89,19 +90,67 @@ def check_memory_and_cpu():
         partitions,
         update_conflicts=True,
         unique_fields=['uuid'],
-        update_fields=['mount_point', 'filesystem', 'active', 'device', 'name']
+        update_fields=['active', 'device', 'name', 'total']
     )
     DiskUsageData.objects.bulk_create(dud)
-    partitionsDb = {partition.uuid: partition for partition in PartitionData.objects.all()}
+    partitionDb = {partition.uuid: partition for partition in PartitionData.objects.all()}
     for disk in statsDisk:
-        for partition in disk['partitions']:
-            if partition['uuid']:
-                partitionObject = partitionsDb[partition['uuid']]
-                partitionUsageObject = PartitionUsageData(
-                    partition = partitionObject,
-                    timestamp = time,
-                    total = partition['size'],
-                    free = partition['free_space'],
-                )
-                pud.append(partitionUsageObject)
-    PartitionUsageData.objects.bulk_create(pud)
+        hw_id = disk['wwn'] or disk['serial'] or disk['device']
+        if disk['filesystem']:
+            fs = FilesystemData(
+                disk = disksDb[hw_id],
+                label = disk['filesystem']['label'],
+                mount_point = disk['filesystem']['mount_point'],
+                uuid = disk['filesystem']['uuid'],
+                active = True,
+                filesystem_type = disk['filesystem']['filesystem_type']
+            )
+            filesystems.append(fs)
+            active_fs_uuids.append(disk['filesystem']['uuid'])
+        else:
+            for partition in disk['partitions']:
+                if partition['filesystem']:
+                    fs = FilesystemData(
+                        partition = partitionDb[partition['uuid']],
+                        label = partition['filesystem']['label'],
+                        mount_point = partition['filesystem']['mount_point'],
+                        uuid = partition['filesystem']['uuid'],
+                        active = True,
+                        filesystem_type = partition['filesystem']['filesystem_type']
+                    )
+                    filesystems.append(fs)
+                    active_fs_uuids.append(partition['filesystem']['uuid'])
+    activeFilesystems = FilesystemData.objects.filter(active=True)
+    for filesystemOb in activeFilesystems:
+        if filesystemOb.uuid not in active_fs_uuids:
+            filesystemOb.active = False
+            filesystems.append(filesystemOb)
+    FilesystemData.objects.bulk_create(
+        filesystems,
+        update_conflicts=True,
+        unique_fields=['uuid'],
+        update_fields=['active', 'mount_point', 'label']
+    )
+    filesystemDb = {filesystem.uuid: filesystem for filesystem in FilesystemData.objects.all()}
+    for disk in statsDisk:
+        hw_id = disk['wwn'] or disk['serial'] or disk['device']
+        if disk['filesystem']:
+            item = FilesystemUsageData(
+                filesystem = filesystemDb[disk['filesystem']['uuid']],
+                timestamp = time,
+                size = disk['filesystem']['size'],
+                free = disk['filesystem']['free_space'],
+            )
+            fud.append(item)
+        else:
+            for partition in disk['partitions']:
+                if partition['filesystem']:
+                    item = FilesystemUsageData(
+                        filesystem = filesystemDb[partition['filesystem']['uuid']],
+                        timestamp = time,
+                        size = partition['filesystem']['size'],
+                        free = partition['filesystem']['free_space'],
+                    )
+                    fud.append(item)
+
+    FilesystemUsageData.objects.bulk_create(fud)

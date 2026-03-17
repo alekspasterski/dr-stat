@@ -32,20 +32,27 @@ class DiskData(models.Model):
 class PartitionData(models.Model):
     device = models.ForeignKey(DiskData, related_name="partition_data", on_delete=models.CASCADE)
     name = models.CharField(null=True)
-    mount_point = models.CharField()
-    filesystem = models.CharField(null=True)
     uuid = models.CharField(unique=True)
     active = models.BooleanField()
-    def __str__(self):
-        return self.mount_point
-    
-class PartitionUsageData(models.Model):
-    partition = models.ForeignKey(PartitionData, related_name="partition_usage", on_delete=models.CASCADE)
-    timestamp = models.DateTimeField()
     total = models.PositiveBigIntegerField()
+    def __str__(self):
+        return self.name
+    
+class FilesystemData(models.Model):
+    disk = models.OneToOneField(DiskData, related_name="filesystem_data", on_delete=models.CASCADE, null=True, blank=True)
+    partition = models.OneToOneField(PartitionData, related_name="filesystem_data", on_delete=models.CASCADE, null=True, blank=True)
+    label = models.CharField(null=True)
+    mount_point = models.CharField()
+    uuid = models.CharField(unique=True)
+    active = models.BooleanField()
+    filesystem_type = models.CharField()
+
+class FilesystemUsageData(models.Model):
+    filesystem = models.ForeignKey(FilesystemData, related_name="filesystem_usage", on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    size = models.BigIntegerField()
     free = models.PositiveBigIntegerField()
     
-
 class DiskUsageData(models.Model):
     device = models.ForeignKey(DiskData, related_name="disk_usage", on_delete=models.CASCADE)
     timestamp = models.DateTimeField()

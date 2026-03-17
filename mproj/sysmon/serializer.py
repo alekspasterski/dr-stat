@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
+from diskinfo import FileSystem
 from rest_framework import serializers
-from .models import CpuUsageData, MemoryData, CpuData, DiskData, DiskUsageData, PartitionData, PartitionUsageData
+from .models import CpuUsageData, MemoryData, CpuData, DiskData, DiskUsageData, PartitionData, FilesystemData, FilesystemUsageData
 
 class MemorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,19 +26,27 @@ class SystemInfoSerializer(serializers.Serializer):
     system_time_zone = serializers.CharField()
     system_time_offset = serializers.CharField()
     cpu_model = serializers.CharField()
+    hostname = serializers.CharField()
+
+class FilesystemUsageDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FilesystemUsageData
+        fields = "__all__"
+
+class FilesystemDataSerializer(serializers.ModelSerializer):
+    filesystem_usage = FilesystemUsageDataSerializer(many=True, read_only=True)
+    class Meta:
+        model = FilesystemData
+        fields = "__all__"
 
 class DiskUsageDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiskUsageData
         fields = "__all__"
 
-class PartitionUsageDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PartitionUsageData
-        fields = "__all__"
 
 class PartitionDataSerializer(serializers.ModelSerializer):
-    partition_usage = PartitionUsageDataSerializer(many=True, read_only=False)
+    filesystem_data = FilesystemDataSerializer(read_only=True)
     class Meta:
         model = PartitionData
         fields = "__all__"
@@ -45,6 +54,7 @@ class PartitionDataSerializer(serializers.ModelSerializer):
 class DiskDataSerializer(serializers.ModelSerializer):
     disk_usage = DiskUsageDataSerializer(many=True, read_only=True)
     partition_data = PartitionDataSerializer(many=True, read_only=True)
+    filesystem_data = FilesystemDataSerializer(read_only=True)
     class Meta:
         model = DiskData
         fields = "__all__"

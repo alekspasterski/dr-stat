@@ -82,24 +82,52 @@ def get_disk_info():
     disks_return = []
     io_counters = psutil.disk_io_counters(perdisk=True)
     ps_partitions = psutil.disk_partitions(all=True)
-    for item in disks:
+    for disk in disks:
         d = {
-            "wwn": item.get_wwn(),
-            "device": item.get_name(),
-            "serial": item.get_serial_number(),
-            "size": item.get_size() * 512,
-            "read_count": io_counters[item.get_name()].read_count,
-            "write_count": io_counters[item.get_name()].write_count,
-            "read_bytes": io_counters[item.get_name()].read_bytes,
-            "write_bytes": io_counters[item.get_name()].write_bytes,
+            "wwn": disk.get_wwn(),
+            "device": disk.get_name(),
+            "serial": disk.get_serial_number(),
+            "size": disk.get_size() * 512,
+            "read_count": io_counters[disk.get_name()].read_count,
+            "write_count": io_counters[disk.get_name()].write_count,
+            "read_bytes": io_counters[disk.get_name()].read_bytes,
+            "write_bytes": io_counters[disk.get_name()].write_bytes,
+            "filesystem": {
+            },
             "partitions": [{
                 "name": partition.get_name(),
-                "mount_point": (mp := next((p.mountpoint for p in ps_partitions if p.device == partition.get_path() and p.mountpoint.startswith('/host')), "")) and (mp.removeprefix('/host') or '/'),
-                "filesystem": partition.get_fs_type(),
-                "uuid": partition.get_fs_uuid(),
+                "uuid": partition.get_part_uuid(),
+                #"mount_point": (mp := next((p.mountpoint for p in ps_partitions if p.device == partition.get_path() and p.mountpoint.startswith('/host')), "")) and (mp.removeprefix('/host') or '/'),
+                "filesystem": {
+                    "uuid": partition.get_filesystem().get_fs_uuid(),
+                    "free_space": partition.get_filesystem().get_fs_free_size() * 512,
+                    "filesystem_type": partition.get_filesystem().get_fs_type(),
+                    "label": partition.get_filesystem().get_fs_label(),
+                    "mount_point": partition.get_filesystem().get_fs_mounting_point(),
+                    "size": partition.get_filesystem().get_fs_size() * 512,
+                },
                 "size": partition.get_part_size() * 512,
-                "free_space": partition.get_fs_free_size() * 512,
-            } for partition in item.get_partition_list()]
+            } for partition in disk.get_partition_list()]
         }
+        if disk.get_filesystem():
+            disk_filesystem = disk.get_filesystem()
+            d_fs = {
+                "uuid": disk_filesystem.get_fs_uuid(),
+                "free_space": disk_filesystem.get_fs_free_size() * 512,
+                "filesystem_type": disk_filesystem.get_fs_type(),
+                "label": disk_filesystem.get_fs_label(),
+                "mount_point": disk_filesystem.get_fs_mounting_point(),
+                "size": disk_filesystem.get_fs_size() * 512,
+                }
+            d.update({'filesystem': d_fs})
         disks_return.append(d)
     return disks_return
+
+def get_hostname() -> str:
+    hostname = ""
+    try:
+        with open("/etc/hostname", "r") as hostname_file:
+            hostname = hostname_file.readline().strip()
+    except FileNotFoundError:
+        hostname = ""
+    return hostname

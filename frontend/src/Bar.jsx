@@ -1,8 +1,39 @@
 import './App.css'
-function Bar({logoutFunction}) {
+function Bar({ logoutFunction, timePeriod, setTimePeriod, pollingFrequency, setPollingFrequency }) {
+    
+    const handleTimePeriodChange = (e) => {
+        setTimePeriod(e.target.value);
+    }
+    const handlePollingFrequencyChange = (e) => {
+        setPollingFrequency(e.target.value);
+    }
 
     return (
         <div className="bar">
+            <label>History period:
+                <select name="timePeriod"
+                        id="time-period-select"
+                        value={timePeriod}
+                        onChange={handleTimePeriodChange}>
+                    <option value="2">2m</option>
+                    <option value="5">5m</option>
+                    <option value="10">10m</option>
+                    <option value="30">30m</option>
+                    <option value="60">60m</option>
+                </select>
+            </label>
+            <label>Polling frequency: 
+                <select name="timePeriod"
+                        id="time-period-select"
+                        value={pollingFrequency}
+                        onChange={handlePollingFrequencyChange}>
+                    <option value="1">1s</option>
+                    <option value="5">5s</option>
+                    <option value="10">10s</option>
+                    <option value="20">20s</option>
+                    <option value="30">30s</option>
+                </select>
+            </label>
             <a className="logoutButton" onClick={logoutFunction}>Log out</a>
         </div>
     )

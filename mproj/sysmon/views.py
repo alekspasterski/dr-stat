@@ -10,8 +10,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.request import Request
 
-from .models import DiskUsageData, MemoryData, CpuData, DiskData, PartitionUsageData, PartitionData
-from .utils import get_cpu_info, get_system_time, get_uptime
+from .models import DiskUsageData, MemoryData, CpuData, DiskData, PartitionData, FilesystemUsageData, FilesystemData
+from .utils import get_cpu_info, get_system_time, get_uptime, get_hostname
 from .serializer import CpuDataSerializer, MemorySerializer, SystemInfoSerializer, DiskDataSerializer
 
 @api_view(['GET'])
@@ -65,13 +65,15 @@ def disk(request, time: int | NoneType = None, format=None) -> Response:
     if request.method == 'GET':
         if time is not None:
             time_threshold = timezone.now() - timedelta(minutes=time)
-            recent_pud = PartitionUsageData.objects.filter(timestamp__gt=time_threshold)
+
+            recent_fud = FilesystemUsageData.objects.filter(timestamp__gt=time_threshold)
             recent_dud = DiskUsageData.objects.filter(timestamp__gt=time_threshold)
-            partitions_with_recent_pud = Prefetch(
-                'partition_data',
-                queryset=PartitionData.objects.prefetch_related(
-                    Prefetch('partition_usage',
-                             queryset=recent_pud)
+
+            filesystems_with_recent_fud = Prefetch(
+                'filesystem_data',
+                queryset=FilesystemData.objects.prefetch_related(
+                    Prefetch('filesystem_usage',
+                             queryset=recent_fud)
                 )
             )
             data = DiskData.objects.prefetch_related(
@@ -79,7 +81,13 @@ def disk(request, time: int | NoneType = None, format=None) -> Response:
                     'disk_usage',
                     queryset=recent_dud,
                 ),
-                partitions_with_recent_pud
+                filesystems_with_recent_fud,
+                Prefetch(
+                    'partition_data',
+                    queryset=PartitionData.objects.prefetch_related(
+                            filesystems_with_recent_fud,
+                    )
+                )
             )
             s = DiskDataSerializer(data, many=True)
         else:
@@ -104,6 +112,7 @@ class SystemInfoView(APIView):
             "system_time_zone": system_time["time_zone_name"],
             "system_time_offset": system_time["time_zone_offset"],
             "cpu_model": get_cpu_info()['cpu_model'],
+            "hostname": get_hostname(),
         }
         s = SystemInfoSerializer(data)
         return Response(s.data)
