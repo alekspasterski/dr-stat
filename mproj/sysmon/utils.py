@@ -99,6 +99,7 @@ def get_disk_info():
             "write_count": io_counters[disk.get_name()].write_count,
             "read_bytes": io_counters[disk.get_name()].read_bytes,
             "write_bytes": io_counters[disk.get_name()].write_bytes,
+            "type": disk.get_type_str(),
             "filesystem": {
             },
             "partitions": [{

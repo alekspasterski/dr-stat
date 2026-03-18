@@ -41,7 +41,8 @@ def check_memory_and_cpu():
             hw_id=hw_id,
             hw_id_type='wwn' if disk['wwn'] else ('serial' if disk['serial'] else 'device'),
             device=disk['device'],
-            active=True
+            active=True,
+            type=disk['type'],
         )
         disks.append(diskObject)
     # Check for active disks - we need to deactivate them if they are not attached

@@ -88,6 +88,7 @@ function App() {
     const [systemInfo, setSystemInfo] = useState({});
     const [timePeriod, setTimePeriod] = useSavedState("sysmon_time_period",2);
     const [pollingFrequency, setPollingFrequency] = useSavedState("sysmon_polling_frequency", 5);
+    const [filesystemFiltering, setFilesystemFiltering] = useSavedState("sysmon_filesystem_filtering", false);
     // Check if we have a valid refresh token in cookies
     useEffect(() => {
         refreshAPIToken().finally(() => {
@@ -160,6 +161,10 @@ function App() {
         return (<div className="loader"></div>)
     }
 
+    const disksToDisplay = disks.filter((disk) => {
+        return filesystemFiltering ? disk.type !== 'LOOP' : true
+    });
+
     if (loggedIn) {
         let history = memory.map(memObject => new Date(memObject.timestamp));
         let CpuHistory = Object.keys(cpu).length > 0 ?
@@ -168,7 +173,8 @@ function App() {
         return (
             <div className="topContainer">
                 <Bar logoutFunction={logout} timePeriod={timePeriod} setTimePeriod={setTimePeriod}
-                pollingFrequency={pollingFrequency} setPollingFrequency={setPollingFrequency}/>
+                pollingFrequency={pollingFrequency} setPollingFrequency={setPollingFrequency}
+                filesystemFiltering={filesystemFiltering} setFilesystemFiltering={setFilesystemFiltering}/>
                 <div className="monitorContainer">
                     <h1>System Monitor</h1>
                     <div className="hostContainer">
@@ -192,10 +198,10 @@ function App() {
                             ) : (
                                 <p>Awaiting more data...</p>
                             )}
-                            {disks.length > 0 ? (
+                            {disksToDisplay.length > 0 ? (
                                 <ThemeProvider theme={darkTheme}>
                                     <div className="chartCard" onClick={handleDiskChartModalOpen}>
-                                        <DiskChart disks={disks} height={300} />
+                                        <DiskChart disks={disksToDisplay} height={300} />
                                     </div>
                                 </ThemeProvider>
                             ) : (
@@ -232,8 +238,8 @@ function App() {
                                 </InfoCard>
                             )}
                             <InfoCard title="Disks">
-                                {disks.length > 0 ? (
-                                    disks.map((disk) => (
+                                {disksToDisplay.length > 0 ? (
+                                    disksToDisplay.map((disk) => (
                                         <DiskInfo disk={disk} key={disk.hw_id} />
                                     ))
                                 ) : (
@@ -268,7 +274,7 @@ function App() {
                             onClose={handleDiskChartModalClose}>
                             <div className="ModalBox">
                                 <ThemeProvider theme={darkTheme}>
-                                    <DiskChart disks={disks} />
+                                    <DiskChart disks={disksToDisplay} />
                                 </ThemeProvider>
                             </div>
                         </Modal>

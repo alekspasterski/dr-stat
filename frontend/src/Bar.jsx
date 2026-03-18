@@ -1,5 +1,9 @@
 import './App.css'
-function Bar({ logoutFunction, timePeriod, setTimePeriod, pollingFrequency, setPollingFrequency }) {
+function Bar({ logoutFunction, 
+               timePeriod, setTimePeriod,
+               pollingFrequency, setPollingFrequency,
+               filesystemFiltering, setFilesystemFiltering
+}) {
     
     const handleTimePeriodChange = (e) => {
         setTimePeriod(e.target.value);
@@ -8,8 +12,21 @@ function Bar({ logoutFunction, timePeriod, setTimePeriod, pollingFrequency, setP
         setPollingFrequency(e.target.value);
     }
 
+    const handleFilesystemFilteringChange = (e) => {
+        setFilesystemFiltering(e.target.value);
+    }
+
     return (
         <div className="bar">
+            <label>Show loop devices:
+                <select name="timePeriod"
+                        id="time-period-select"
+                        value={filesystemFiltering}
+                        onChange={handleFilesystemFilteringChange}>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </label>
             <label>History period:
                 <select name="timePeriod"
                         id="time-period-select"
@@ -23,8 +40,8 @@ function Bar({ logoutFunction, timePeriod, setTimePeriod, pollingFrequency, setP
                 </select>
             </label>
             <label>Polling frequency: 
-                <select name="timePeriod"
-                        id="time-period-select"
+                <select name="pollingFrequency"
+                        id="polling-frequency-select"
                         value={pollingFrequency}
                         onChange={handlePollingFrequencyChange}>
                     <option value="1">1s</option>

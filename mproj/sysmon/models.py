@@ -26,6 +26,7 @@ class DiskData(models.Model):
     hw_id_type = models.CharField()
     device = models.CharField()
     active = models.BooleanField()
+    type = models.CharField()
     def __str__(self):
         return self.device
 
