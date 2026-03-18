@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import useSavedState from './useSavedState.jsx'
 import './App.css'
 import InfoCard from './InfoCard.jsx'
 import CpuChart from './CpuChart.jsx'
@@ -85,8 +86,8 @@ function App() {
     const [cpu, setCpu] = useState([]);
     const [disks, setDisks] = useState([]);
     const [systemInfo, setSystemInfo] = useState({});
-    const [timePeriod, setTimePeriod] = useState(2);
-    const [pollingFrequency, setPollingFrequency] = useState(5)
+    const [timePeriod, setTimePeriod] = useSavedState("sysmon_time_period",2);
+    const [pollingFrequency, setPollingFrequency] = useSavedState("sysmon_polling_frequency", 5);
     // Check if we have a valid refresh token in cookies
     useEffect(() => {
         refreshAPIToken().finally(() => {
