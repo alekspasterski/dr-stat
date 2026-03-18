@@ -162,7 +162,7 @@ function App() {
     }
 
     const disksToDisplay = disks.filter((disk) => {
-        return filesystemFiltering ? disk.type !== 'LOOP' : true
+        return filesystemFiltering ? disk.type !== 'LOOP' && !disk.device.includes('loop') : true
     });
 
     if (loggedIn) {

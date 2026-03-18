@@ -95,12 +95,13 @@ def get_filesystem_dict(fs: FileSystem | None, device: str, ps_partitions: list)
         ),
         "",
     )
+    fs_uuid = fs.get_fs_uuid() if fs.get_fs_uuid() else f"fallback-{device.replace('/', '-')}"
     mounting_point = host_mount if host_mount else fs.get_fs_mounting_point()
     return {
-        "uuid": fs.get_fs_uuid(),
+        "uuid": fs_uuid,
         "free_space": fs.get_fs_free_size() * 512,
-        "filesystem_type": fs.get_fs_type(),
-        "label": fs.get_fs_label(),
+        "filesystem_type": fs.get_fs_type() or "Unknown",
+        "label": fs.get_fs_label() or "Unlabeled",
         "mount_point": clean_mount_point(mounting_point),
         "size": fs.get_fs_size() * 512,
     }

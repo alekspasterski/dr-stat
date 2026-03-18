@@ -13,18 +13,18 @@ function Bar({ logoutFunction,
     }
 
     const handleFilesystemFilteringChange = (e) => {
-        setFilesystemFiltering(e.target.value);
+        setFilesystemFiltering(e.target.value === 'true');
     }
 
     return (
         <div className="bar">
             <label>Show loop devices:
-                <select name="timePeriod"
-                        id="time-period-select"
+                <select name="filesystemFiltering"
+                        id="filesystem-filtering-select"
                         value={filesystemFiltering}
                         onChange={handleFilesystemFilteringChange}>
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
+                    <option value="false">Yes</option>
+                    <option value="true">No</option>
                 </select>
             </label>
             <label>History period:
