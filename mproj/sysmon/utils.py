@@ -77,6 +77,13 @@ def get_system_time() -> dict[str, datetime | str | timedelta | None]:
         "time_zone_offset": current_system_time.utcoffset(),
     })
 
+def clean_mount_point(mount_point: str) -> str:
+    if not mount_point:
+        return ''
+    else:
+        mount_point = mount_point.removeprefix('/host')
+        return mount_point if mount_point != '' else '/'
+
 def get_disk_info():
     disks = DiskInfo().get_disk_list()
     disks_return = []
@@ -103,7 +110,7 @@ def get_disk_info():
                     "free_space": partition.get_filesystem().get_fs_free_size() * 512,
                     "filesystem_type": partition.get_filesystem().get_fs_type(),
                     "label": partition.get_filesystem().get_fs_label(),
-                    "mount_point": partition.get_filesystem().get_fs_mounting_point(),
+                    "mount_point": clean_mount_point(partition.get_filesystem().get_fs_mounting_point()),
                     "size": partition.get_filesystem().get_fs_size() * 512,
                 },
                 "size": partition.get_part_size() * 512,
@@ -116,7 +123,7 @@ def get_disk_info():
                 "free_space": disk_filesystem.get_fs_free_size() * 512,
                 "filesystem_type": disk_filesystem.get_fs_type(),
                 "label": disk_filesystem.get_fs_label(),
-                "mount_point": disk_filesystem.get_fs_mounting_point(),
+                "mount_point": clean_mount_point(disk_filesystem.get_fs_mounting_point()),
                 "size": disk_filesystem.get_fs_size() * 512,
                 }
             d.update({'filesystem': d_fs})
