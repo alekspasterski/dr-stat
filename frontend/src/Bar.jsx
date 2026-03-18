@@ -18,7 +18,7 @@ function Bar({ logoutFunction,
 
     return (
         <div className="bar">
-            <label>Show loop devices:
+            <label><span className="barLabel">Show loop devices:</span>
                 <select name="filesystemFiltering"
                         id="filesystem-filtering-select"
                         value={filesystemFiltering}
@@ -27,7 +27,7 @@ function Bar({ logoutFunction,
                     <option value="true">No</option>
                 </select>
             </label>
-            <label>History period:
+            <label><span className='barLabel'>History period:</span>
                 <select name="timePeriod"
                         id="time-period-select"
                         value={timePeriod}
@@ -39,7 +39,7 @@ function Bar({ logoutFunction,
                     <option value="60">60m</option>
                 </select>
             </label>
-            <label>Polling frequency: 
+            <label><span className='barLabel'>Polling frequency:</span>
                 <select name="pollingFrequency"
                         id="polling-frequency-select"
                         value={pollingFrequency}

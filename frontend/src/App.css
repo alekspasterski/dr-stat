@@ -247,7 +247,7 @@ h1 {
 }
 
 .logoutButton {
-    color: #777;
+    color: #FF746C;
     transition: color 500ms ease-out;
     cursor: default;
 }
@@ -276,4 +276,8 @@ h1 {
 }
 .hostContainer > h2 {
     margin-top: 0px;
+}
+
+.barLabel {
+    padding-right: 5px;
 }
