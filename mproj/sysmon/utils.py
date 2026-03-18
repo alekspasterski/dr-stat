@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 import psutil
 from platform import system
-from diskinfo import DiskInfo, disksmart
+from diskinfo import DiskInfo, FileSystem, disksmart
 
 
 def get_uptime() -> float:
@@ -84,6 +84,28 @@ def clean_mount_point(mount_point: str) -> str:
         mount_point = mount_point.removeprefix('/host')
         return mount_point if mount_point != '' else '/'
 
+def get_filesystem_dict(fs: FileSystem | None, device: str, ps_partitions: list) -> dict[str, str | int]:
+    if not fs:
+        return {}
+    host_mount = next(
+        (
+            p.mountpoint
+            for p in ps_partitions
+            if p.device == device and p.mountpoint.startswith("/host")
+        ),
+        "",
+    )
+    mounting_point = host_mount if host_mount else fs.get_fs_mounting_point()
+    return {
+        "uuid": fs.get_fs_uuid(),
+        "free_space": fs.get_fs_free_size() * 512,
+        "filesystem_type": fs.get_fs_type(),
+        "label": fs.get_fs_label(),
+        "mount_point": clean_mount_point(mounting_point),
+        "size": fs.get_fs_size() * 512,
+    }
+
+
 def get_disk_info():
     disks = DiskInfo().get_disk_list()
     disks_return = []
@@ -105,28 +127,13 @@ def get_disk_info():
             "partitions": [{
                 "name": partition.get_name(),
                 "uuid": partition.get_part_uuid(),
-                #"mount_point": (mp := next((p.mountpoint for p in ps_partitions if p.device == partition.get_path() and p.mountpoint.startswith('/host')), "")) and (mp.removeprefix('/host') or '/'),
-                "filesystem": {
-                    "uuid": partition.get_filesystem().get_fs_uuid(),
-                    "free_space": partition.get_filesystem().get_fs_free_size() * 512,
-                    "filesystem_type": partition.get_filesystem().get_fs_type(),
-                    "label": partition.get_filesystem().get_fs_label(),
-                    "mount_point": clean_mount_point(partition.get_filesystem().get_fs_mounting_point()),
-                    "size": partition.get_filesystem().get_fs_size() * 512,
-                },
+                "filesystem": get_filesystem_dict(partition.get_filesystem(), partition.get_path(), ps_partitions),
                 "size": partition.get_part_size() * 512,
             } for partition in disk.get_partition_list()]
         }
         if disk.get_filesystem():
             disk_filesystem = disk.get_filesystem()
-            d_fs = {
-                "uuid": disk_filesystem.get_fs_uuid(),
-                "free_space": disk_filesystem.get_fs_free_size() * 512,
-                "filesystem_type": disk_filesystem.get_fs_type(),
-                "label": disk_filesystem.get_fs_label(),
-                "mount_point": clean_mount_point(disk_filesystem.get_fs_mounting_point()),
-                "size": disk_filesystem.get_fs_size() * 512,
-                }
+            d_fs = get_filesystem_dict(disk_filesystem, disk.get_path(), ps_partitions)
             d.update({'filesystem': d_fs})
         disks_return.append(d)
     return disks_return
