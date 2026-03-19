@@ -53,6 +53,7 @@ function DiskChart({disks, height=0}) {
                         })))
                 }
                 height={height > 0 ? height : undefined}
+                skipAnimation={true}
             />
         </>
     )

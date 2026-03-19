@@ -256,7 +256,9 @@ function App() {
                             onClose={handleMemoryChartModalClose}>
                             <div className="ModalBox">
                                 <ThemeProvider theme={darkTheme}>
-                                    <MemoryChart memory={memory} MemoryHistory={history} />
+                                    {memoryChartModalOpen && (
+                                        <MemoryChart memory={memory} MemoryHistory={history} />
+                                    )}
                                 </ThemeProvider>
                             </div>
                         </Modal>
@@ -265,7 +267,9 @@ function App() {
                             onClose={handleCpuChartModalClose}>
                             <div className="ModalBox">
                                 <ThemeProvider theme={darkTheme}>
-                                    <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
+                                    {CpuChartModalOpen && (
+                                        <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
+                                    )}
                                 </ThemeProvider>
                             </div>
                         </Modal>
@@ -274,7 +278,9 @@ function App() {
                             onClose={handleDiskChartModalClose}>
                             <div className="ModalBox">
                                 <ThemeProvider theme={darkTheme}>
-                                    <DiskChart disks={disksToDisplay} />
+                                    {DiskChartModalOpen && (
+                                        <DiskChart disks={disksToDisplay} />
+                                    )}
                                 </ThemeProvider>
                             </div>
                         </Modal>

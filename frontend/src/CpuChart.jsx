@@ -31,6 +31,7 @@ function CpuChart({cpu, CpuHistory, height=0}) {
                     }))
                 }
                 height={height > 0 ? height : undefined}
+                skipAnimation={true}
             />
         </>
     )

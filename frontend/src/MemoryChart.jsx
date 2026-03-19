@@ -31,6 +31,7 @@ function MemoryChart({memory, MemoryHistory, height=0}) {
                     },
                 ]}
                 height={height > 0 ? height : undefined}
+                skipAnimation={true}
             />
         </>
     )
