@@ -2,7 +2,8 @@
 from datetime import datetime, timedelta
 import psutil
 from platform import system
-from diskinfo import DiskInfo, FileSystem, disksmart
+from diskinfo import DiskInfo, FileSystem
+import os
 
 
 def get_uptime() -> float:
@@ -140,10 +141,4 @@ def get_disk_info():
     return disks_return
 
 def get_hostname() -> str:
-    hostname = ""
-    try:
-        with open("/etc/hostname", "r") as hostname_file:
-            hostname = hostname_file.readline().strip()
-    except FileNotFoundError:
-        hostname = ""
-    return hostname
+    return os.environ.get("HOST_NAME", "Unknown Machine")

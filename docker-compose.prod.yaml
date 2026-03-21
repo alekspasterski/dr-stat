@@ -18,9 +18,10 @@ services:
       - "8000:8000"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /etc/hostname:/etc/hostname:ro
       - django_static:/app/staticfiles
     pid: "host"
+    environment:
+      - HOST_NAME=${HOST_NAME}
     env_file:
       - .env.prod
     depends_on:
@@ -42,6 +43,8 @@ services:
       - /:/host:ro
       - /sys:/sys:ro
     privileged: true
+    environment:
+      - HOST_NAME=${HOST_NAME}
     env_file:
       - .env.prod
     pid: "host"
