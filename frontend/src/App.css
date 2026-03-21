@@ -1,5 +1,4 @@
 #root {
-  max-width: 1280px;
   margin: 0 auto;
   text-align: center;
 }
@@ -208,6 +207,7 @@ h1 {
     border: 1px solid #222;
     border-radius: 10px;
     background-color: #fdaaaa;
+  max-width: 1280px;
     color: black;
     box-shadow: 5px 10px #111;
     padding: 10px;
@@ -222,6 +222,7 @@ h1 {
 .topContainer {
     display: flex;
     flex-direction: column;
+    max-width: 1280px;
 }
 
 .monitorContainer {
@@ -231,6 +232,7 @@ h1 {
 
 .bar {
     height: 40px;
+    width: 100%;
     background-color: #333;
     position: sticky;
     top: 0px;
@@ -244,6 +246,7 @@ h1 {
     border-bottom: 1px solid #444;
     justify-content: flex-end;
     gap: 15px;
+    box-sizing: border-box;
 }
 
 .logoutButton {

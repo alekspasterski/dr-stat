@@ -171,10 +171,11 @@ function App() {
             Object.values(cpu).map(cpuObject => new Date(cpuObject.timestamp)) : [];
 
         return (
-            <div className="topContainer">
+            <>
                 <Bar logoutFunction={logout} timePeriod={timePeriod} setTimePeriod={setTimePeriod}
                 pollingFrequency={pollingFrequency} setPollingFrequency={setPollingFrequency}
                 filesystemFiltering={filesystemFiltering} setFilesystemFiltering={setFilesystemFiltering}/>
+            <div className="topContainer">
                 <div className="monitorContainer">
                     <h1>System Monitor</h1>
                     <div className="hostContainer">
@@ -287,6 +288,7 @@ function App() {
                     </div>
                 </div>
             </div>
+</>
         )
     }
 }
