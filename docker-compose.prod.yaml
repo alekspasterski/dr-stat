@@ -1,0 +1,86 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: always
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/:Z
+    environment:
+      - POSTGRES_DB=sysmon
+    env_file:
+      - .env.prod
+
+  backend:
+    build:
+      context: ./mproj
+      dockerfile: Dockerfile.prod
+    command: sh -c "sleep 8 && python manage.py migrate --noinput && gunicorn monitor.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    ports:
+      - "8000:8000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/hostname:/etc/hostname:ro
+      - django_static:/app/staticfiles
+    pid: "host"
+    env_file:
+      - .env.prod
+    depends_on:
+      - rabbitmq
+      - db
+
+  celery_worker:
+    build:
+      context: ./mproj
+      dockerfile: Dockerfile.prod
+    command: celery -A monitor worker -l info
+    environment:
+      - PROCFS_PATH=/host/proc
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /run/udev:/run/udev:ro
+      - /dev/disk:/dev/disk:ro
+      - /run/udev:/run/udev:ro
+      - /:/host:ro
+      - /sys:/sys:ro
+    privileged: true
+    env_file:
+      - .env.prod
+    pid: "host"
+    depends_on:
+      - db
+      - backend
+      - rabbitmq
+
+  celery_beat:
+    build:
+      context: ./mproj
+      dockerfile: Dockerfile.prod
+    command: celery -A monitor beat -l info
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env.prod
+    depends_on:
+      - rabbitmq
+      - db
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    restart: always
+    ports:
+      - "15672:15672"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "5173:80"
+    volumes:
+      - django_static:/usr/share/nginx/html/static:ro
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  django_static:
