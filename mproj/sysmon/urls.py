@@ -2,7 +2,6 @@
 
 from django.urls import path
 from rest_framework .urlpatterns import format_suffix_patterns
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from . import views
 
@@ -18,6 +17,7 @@ urlpatterns = [
     path("token/", views.CookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", views.CookieTokenRefreshView.as_view(), name="token_refresh"),
     path("logout/", views.logout, name="logout"),
+    path("update_data_polling/", views.update_data_polling, name="update_data_polling"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

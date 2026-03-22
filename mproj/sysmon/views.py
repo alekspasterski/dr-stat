@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from io import RawIOBase
 from types import NoneType
 from django.db.models import Prefetch
 from django.http import HttpRequest, JsonResponse
@@ -104,8 +105,16 @@ def time(request: Request) -> Response:
 
 class SystemInfoView(APIView):
     def get(self, request: Request) -> Response:
+        from django_celery_beat.models import PeriodicTask, IntervalSchedule
         system_time: dict[str, datetime | str | timedelta | None] = get_system_time()
         uptime = round(get_uptime(), 2)
+        interval = 10
+        try:
+            task = PeriodicTask.objects.get(task="sysmon.tasks.check_memory_and_cpu")
+            interval = task.interval.every
+        except PeriodicTask.DoesNotExist:
+            interval = 10
+            
         data = {
             "system_time": system_time['date_and_time'],
             "uptime": uptime,
@@ -113,6 +122,7 @@ class SystemInfoView(APIView):
             "system_time_offset": system_time["time_zone_offset"],
             "cpu_model": get_cpu_info()['cpu_model'],
             "hostname": get_hostname(),
+            "task_interval": interval,
         }
         s = SystemInfoSerializer(data)
         return Response(s.data)
@@ -142,3 +152,27 @@ def logout(request: Request) -> Response:
     response = Response(status=status.HTTP_200_OK)
     response.delete_cookie('refresh_token')
     return response
+
+@api_view(['POST'])
+def update_data_polling(request: Request) -> Response:
+    raw_interval = request.data.get('interval')
+    try:
+        new_interval = int(raw_interval)
+    except (TypeError, ValueError):
+        return Response(
+            {"error" : "Interval must be a valid number"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    from django_celery_beat.models import PeriodicTask, IntervalSchedule
+    schedule, created = IntervalSchedule.objects.get_or_create(
+        every=new_interval,
+        period=IntervalSchedule.SECONDS,
+    )
+    PeriodicTask.objects.update_or_create(
+        name='System polling',
+        defaults={
+            'task':'sysmon.tasks.check_memory_and_cpu',
+            "interval":schedule,
+        }
+    )
+    return Response(status=status.HTTP_200_OK)

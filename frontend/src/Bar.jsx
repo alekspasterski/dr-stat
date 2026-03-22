@@ -2,7 +2,8 @@ import './App.css'
 function Bar({ logoutFunction, 
                timePeriod, setTimePeriod,
                pollingFrequency, setPollingFrequency,
-               filesystemFiltering, setFilesystemFiltering
+               filesystemFiltering, setFilesystemFiltering,
+               handleServerSideUpdateFrequencyChange, serverSideUpdateFrequency
 }) {
     
     const handleTimePeriodChange = (e) => {
@@ -15,9 +16,21 @@ function Bar({ logoutFunction,
     const handleFilesystemFilteringChange = (e) => {
         setFilesystemFiltering(e.target.value === 'true');
     }
+    
 
     return (
         <div className="bar">
+            <label><span className="barLabel">Server-side update frequency:</span>
+                <select name="serverSideUpdateFrequency"
+                        id="server-side-update-frequency"
+                        defaultValue={serverSideUpdateFrequency}
+                        onChange={handleServerSideUpdateFrequencyChange}>
+                    <option value="3">3s</option>
+                    <option value="5">5s</option>
+                    <option value="10">10s</option>
+                    <option value="20">20s</option>
+                </select>
+            </label>
             <label><span className="barLabel">Show loop devices:</span>
                 <select name="filesystemFiltering"
                         id="filesystem-filtering-select"

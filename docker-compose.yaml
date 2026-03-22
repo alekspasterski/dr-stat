@@ -34,7 +34,7 @@ services:
 
   celery_beat:
     build: ./mproj
-    command: celery -A monitor beat -l info
+    command: celery -A monitor beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./mproj:/app:z
       - /etc/localtime:/etc/localtime:ro

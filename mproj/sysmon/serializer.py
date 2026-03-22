@@ -27,6 +27,7 @@ class SystemInfoSerializer(serializers.Serializer):
     system_time_offset = serializers.CharField()
     cpu_model = serializers.CharField()
     hostname = serializers.CharField()
+    task_interval = serializers.IntegerField()
 
 class FilesystemUsageDataSerializer(serializers.ModelSerializer):
     class Meta:
