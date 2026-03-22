@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "sysmon",
     "rest_framework",
     "rest_framework_simplejwt",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -149,12 +150,6 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
 
 CELERY_BROKER_URL = "amqp://guest:guest@rabbitmq:5672//"
 
-CELERY_BEAT_SCHEDULE = {
-    "poll-system-resources-10s": {
-        "task": "sysmon.tasks.check_memory_and_cpu",
-        "schedule": 10.0,
-    },
-}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
