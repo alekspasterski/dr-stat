@@ -9,6 +9,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/hostname:/etc/hostname:ro
     pid: "host"
+    environment:
+      - HOST_NAME=${HOST_NAME}
     env_file:
       - .env
 

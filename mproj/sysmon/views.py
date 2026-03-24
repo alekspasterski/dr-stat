@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from io import RawIOBase
 from types import NoneType
+from django.conf import Settings
 from django.db.models import Prefetch
 from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
@@ -11,9 +12,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.request import Request
 
-from .models import DiskUsageData, MemoryData, CpuData, DiskData, PartitionData, FilesystemUsageData, FilesystemData
+from .models import DiskUsageData, MemoryData, CpuData, DiskData, PartitionData, FilesystemUsageData, FilesystemData, Settings
 from .utils import get_cpu_info, get_system_time, get_uptime, get_hostname
-from .serializer import CpuDataSerializer, MemorySerializer, SystemInfoSerializer, DiskDataSerializer
+from .serializer import CpuDataSerializer, MemorySerializer, SettingsSerializer, SystemInfoSerializer, DiskDataSerializer
 
 @api_view(['GET'])
 def uptime(request: Request) -> Response:
@@ -176,3 +177,28 @@ def update_data_polling(request: Request) -> Response:
         }
     )
     return Response(status=status.HTTP_200_OK)
+
+@api_view(['POST', 'GET'])
+def settings(request: Request) -> Response:
+    settings, _ = Settings.objects.get_or_create(pk=1)
+
+    if request.method == 'GET':
+        return Response(SettingsSerializer(settings).data)
+    
+    elif request.method == 'POST':
+        for key, value in request.data.items():
+            if hasattr(settings, key) and key not in ['id', '_state']:
+                if key == 'retention_period':
+                    if value in [None, 0, '0', '']:
+                        value = None
+                    else:
+                        try:
+                            value = timedelta(seconds=int(value))
+                        except (TypeError, ValueError):
+                            continue
+                setattr(settings, key, value)
+
+        settings.save()
+        return Response(
+            status=status.HTTP_200_OK,
+        )

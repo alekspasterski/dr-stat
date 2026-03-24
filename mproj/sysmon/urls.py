@@ -18,6 +18,7 @@ urlpatterns = [
     path("token/refresh/", views.CookieTokenRefreshView.as_view(), name="token_refresh"),
     path("logout/", views.logout, name="logout"),
     path("update_data_polling/", views.update_data_polling, name="update_data_polling"),
+    path("settings/", views.settings, name="settings"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -62,3 +62,6 @@ class DiskUsageData(models.Model):
     write_count = models.PositiveBigIntegerField()
     read_bytes = models.PositiveBigIntegerField()
     write_bytes = models.PositiveBigIntegerField()
+
+class Settings(models.Model):
+    retention_period = models.DurationField(null=True)

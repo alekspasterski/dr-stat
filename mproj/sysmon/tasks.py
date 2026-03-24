@@ -1,9 +1,23 @@
 #!/usr/bin/env python3
+import datetime
 from celery import shared_task
+from diskinfo import FileSystem
 from .utils import get_memory_info, get_cpu_info, get_disk_info
-from .models import MemoryData, CpuData, CpuUsageData, DiskData, DiskUsageData, PartitionData, FilesystemData, FilesystemUsageData
+from .models import MemoryData, CpuData, CpuUsageData, DiskData, DiskUsageData, PartitionData, FilesystemData, FilesystemUsageData, Settings
 from django.utils import timezone
 
+@shared_task
+def database_cleanup():
+    settings, _ = Settings.objects.get_or_create(pk=1)
+    if settings.retention_period is None:
+        return
+    else:
+        limit = timezone.now() - settings.retention_period
+        DiskUsageData.objects.filter(timestamp__lte=limit).delete()
+        FilesystemUsageData.objects.filter(timestamp__lte=limit).delete()
+        CpuUsageData.objects.filter(timestamp__lte=limit).delete()
+        MemoryData.objects.filter(timestamp__lte=limit).delete()
+        return
 
 @shared_task
 def check_memory_and_cpu():

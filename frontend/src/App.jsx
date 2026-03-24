@@ -6,6 +6,7 @@ import CpuChart from './CpuChart.jsx'
 import DiskChart from './DiskChart.jsx'
 import DiskInfo from './DiskInfo.jsx'
 import Bar from './Bar.jsx'
+import SettingsModal from './SettingsModal.jsx'
 import MemoryChart from "./MemoryChart.jsx"
 import Login from './Login.jsx'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -75,12 +76,15 @@ function App() {
     const [memoryChartModalOpen, setMemoryChartModalOpen] = useState(false);
     const [CpuChartModalOpen, setCpuChartModalOpen] = useState(false);
     const [DiskChartModalOpen, setDiskChartModalOpen] = useState(false);
+    const [settingsModalOpen, setSettingsModalOpen] = useState(false);
     const handleMemoryChartModalOpen = () => setMemoryChartModalOpen(true);
     const handleMemoryChartModalClose = () => setMemoryChartModalOpen(false);
     const handleCpuChartModalOpen = () => setCpuChartModalOpen(true);
     const handleCpuChartModalClose = () => setCpuChartModalOpen(false);
     const handleDiskChartModalOpen = () => setDiskChartModalOpen(true);
     const handleDiskChartModalClose = () => setDiskChartModalOpen(false);
+    const handleSettingsModalOpen = () => setSettingsModalOpen(true);
+    const handleSettingsModalClose = () => setSettingsModalOpen(false);
     // State for the API calls
     const [memory, setMemory] = useState([]);
     const [cpu, setCpu] = useState([]);
@@ -90,6 +94,18 @@ function App() {
     const [pollingFrequency, setPollingFrequency] = useSavedState("sysmon_polling_frequency", 5);
     const [filesystemFiltering, setFilesystemFiltering] = useSavedState("sysmon_filesystem_filtering", false);
     const [serverSideUpdateFrequency, setServerSideUpdateFrequency] = useState(10);
+    const [retentionPeriod, setRetentionPeriod] = useState(0);
+    const [settings, setSettings] = useState({})
+    const [enabledElements, setEnabledElements] = useSavedState("sysmon_enabled_elements", {
+        cpu_data: { name: "CPU data", enabled: true },
+        memory_data: { name: "Memory data", enabled: true },
+        disk_data: { name : "Disk data", enabled: true },
+        uptime: { name: "Uptime", enabled: true },
+        time: { name: "Time", enabled: true },
+        memory_chart: { name: "Memory chart", enabled: true },
+        cpu_chart: {name: "CPU chart", enabled: true },
+        disk_chart: {name: "Disk chart", enabled: true },
+})
     // Check if we have a valid refresh token in cookies
     useEffect(() => {
         refreshAPIToken().finally(() => {
@@ -125,6 +141,7 @@ function App() {
                 fetchData(`/sysmon/cpu/${timePeriod}.json`, setCpu);
                 fetchData(`/sysmon/disk/${timePeriod}.json`, setDisks);
                 fetchData(`/sysmon/system_info`, setSystemInfo);
+                fetchData(`/sysmon/settings`, setSettings)
             };
             fetchStats();
 
@@ -154,6 +171,23 @@ function App() {
               }).catch((err) => console.log(err))
     }
 
+    
+    const handleRetentionPeriodChange =  (e) => {
+        const url = "sysmon/settings/"
+        fetch(url,
+              {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer ' + token,
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                      'retention_period': e.target.value * 60 * 60 * 24,
+                  })
+              }).catch((err) => console.log(err))
+    }
+    
     const logout = () => {
         fetch('/sysmon/logout/', {
             headers: {
@@ -183,24 +217,36 @@ function App() {
     });
 
     if (loggedIn) {
+        const config = {
+            timePeriod: timePeriod,
+            setTimePeriod: setTimePeriod,
+            pollingFrequency: pollingFrequency,
+            setPollingFrequency: setPollingFrequency,
+            filesystemFiltering: filesystemFiltering,
+            setFilesystemFiltering: setFilesystemFiltering,
+            serverSideUpdateFrequency: systemInfo["task_interval"],
+            handleServerSideUpdateFrequencyChange: handleServerSideUpdateFrequencyChange,
+            enabledElements: enabledElements,
+            setEnabledElements: setEnabledElements,
+            settings: settings,
+            setSettings: setSettings,
+            handleRetentionPeriodChange: handleRetentionPeriodChange,
+        }
         let history = memory.map(memObject => new Date(memObject.timestamp));
         let CpuHistory = Object.keys(cpu).length > 0 ?
             Object.values(cpu).map(cpuObject => new Date(cpuObject.timestamp)) : [];
 
         return (
             <>
-                <Bar logoutFunction={logout} timePeriod={timePeriod} setTimePeriod={setTimePeriod}
-                    pollingFrequency={pollingFrequency} setPollingFrequency={setPollingFrequency}
-                    filesystemFiltering={filesystemFiltering} setFilesystemFiltering={setFilesystemFiltering} 
-                     handleServerSideUpdateFrequencyChange={handleServerSideUpdateFrequencyChange} serverSideUpdateFrequency={systemInfo["task_interval"]}
-                />
+                <Bar logoutFunction={logout} handleSettingsModalOpen={handleSettingsModalOpen} />
                 <div className="topContainer">
                     <div className="monitorContainer">
                         <h1>System Monitor</h1>
                         <div className="hostContainer">
                             <h2>{systemInfo.hostname}</h2>
                             <div className="chartsContainer">
-                                {memory.length > 0 ? (
+                                {enabledElements.memory_chart.enabled && (
+                                memory.length > 0 ? (
                                     <ThemeProvider theme={darkTheme}>
                                         <div className="chartCard" onClick={handleMemoryChartModalOpen}>
                                             <MemoryChart memory={memory} MemoryHistory={history} height={383} />
@@ -208,8 +254,10 @@ function App() {
                                     </ThemeProvider>
                                 ) : (
                                     <p>Awaiting more data...</p>
-                                )}
-                                {cpu.length > 0 ? (
+                                
+                                ))}
+                                {enabledElements.cpu_chart.enabled && (
+                                    cpu.length > 0 ? (
                                     <ThemeProvider theme={darkTheme}>
                                         <div className="chartCard" onClick={handleCpuChartModalOpen}>
                                             <CpuChart cpu={cpu} CpuHistory={CpuHistory} height={300} />
@@ -217,8 +265,9 @@ function App() {
                                     </ThemeProvider>
                                 ) : (
                                     <p>Awaiting more data...</p>
-                                )}
-                                {disksToDisplay.length > 0 ? (
+                                ))}
+                                {enabledElements.disk_chart.enabled && (
+                                    disksToDisplay.length > 0 ? (
                                     <ThemeProvider theme={darkTheme}>
                                         <div className="chartCard" onClick={handleDiskChartModalOpen}>
                                             <DiskChart disks={disksToDisplay} height={300} />
@@ -226,13 +275,16 @@ function App() {
                                     </ThemeProvider>
                                 ) : (
                                     <p>Awaiting more data...</p>
-                                )}
+                                ))}
                             </div>
                             <div className="mainContainer">
+                                {enabledElements.uptime.enabled && (
                                 <InfoCard title="System Uptime">
                                     <p>{systemInfo['uptime']} minutes</p>
                                 </InfoCard>
-                                {memory.length > 0 ? (
+                                )}
+                                {enabledElements.memory_data.enabled && (
+                                    memory.length > 0 ? (
                                     <InfoCard title="Memory">
                                         <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
                                         <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
@@ -242,8 +294,9 @@ function App() {
                                     <InfoCard title="Memory">
                                         <p>Loading...</p>
                                     </InfoCard>
-                                )}
-                                {cpu.length > 0 ? (
+                                ))}
+                                {enabledElements.cpu_data.enabled && (
+                                    cpu.length > 0 ? (
                                     <InfoCard title="CPU">
                                         <p>CPU Model: {systemInfo.cpu_model}</p>
                                         <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
@@ -256,7 +309,8 @@ function App() {
                                     <InfoCard title="CPU">
                                         <p>Loading...</p>
                                     </InfoCard>
-                                )}
+                                ))}
+                                {enabledElements.disk_data.enabled && (
                                 <InfoCard title="Disks">
                                     {disksToDisplay.length > 0 ? (
                                         disksToDisplay.map((disk) => (
@@ -266,10 +320,13 @@ function App() {
                                         <p>Loading...</p>
                                     )}
                                 </InfoCard>
+                                )}
+                                {enabledElements.time.enabled && (
                                 <InfoCard title="Time">
                                     <p>Server time: {new Date(systemInfo.system_time).toLocaleString()}</p>
                                     <p>Server timezone: {systemInfo.system_time_zone}</p>
                                 </InfoCard>
+                                )}
                             </div>
                             <Modal
                                 open={memoryChartModalOpen}
@@ -304,6 +361,11 @@ function App() {
                                     </ThemeProvider>
                                 </div>
                             </Modal>
+                            <SettingsModal
+                                open={settingsModalOpen}
+                                onClose={handleSettingsModalClose}
+                                config={config}
+                            />
                         </div>
                     </div>
                 </div>

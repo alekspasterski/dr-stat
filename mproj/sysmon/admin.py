@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CpuData, CpuUsageData, MemoryData, DiskData, DiskUsageData, FilesystemData, FilesystemUsageData, PartitionData
+from .models import CpuData, CpuUsageData, MemoryData, DiskData, DiskUsageData, FilesystemData, FilesystemUsageData, PartitionData, Settings
 
 @admin.register(CpuData)
 class CpuDataAdmin(admin.ModelAdmin):
@@ -47,3 +47,7 @@ class FilesystemUsageDataAdmin(admin.ModelAdmin):
     list_display = ('filesystem', 'timestamp', 'size', 'free')
     list_filter = ('timestamp', 'filesystem')
     ordering = ('-timestamp',)
+
+@admin.register(Settings)
+class SettingsAdmin(admin.ModelAdmin):
+    list_display = ('retention_period',)

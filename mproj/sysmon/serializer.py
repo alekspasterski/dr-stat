@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-from diskinfo import FileSystem
 from rest_framework import serializers
-from .models import CpuUsageData, MemoryData, CpuData, DiskData, DiskUsageData, PartitionData, FilesystemData, FilesystemUsageData
+from .models import CpuUsageData, MemoryData, CpuData, DiskData, DiskUsageData, PartitionData, FilesystemData, FilesystemUsageData, Settings
 
 class MemorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,3 +58,14 @@ class DiskDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiskData
         fields = "__all__"
+
+class SettingsSerializer(serializers.ModelSerializer):
+    retention_period = serializers.SerializerMethodField()
+    class Meta:
+        model = Settings
+        fields = "__all__"
+
+    def get_retention_period(self, obj):
+        if obj.retention_period:
+            return int(obj.retention_period.total_seconds())
+        return None
