@@ -40,8 +40,8 @@ class PartitionData(models.Model):
         return self.name
     
 class FilesystemData(models.Model):
-    disk = models.OneToOneField(DiskData, related_name="filesystem_data", on_delete=models.CASCADE, null=True, blank=True)
-    partition = models.OneToOneField(PartitionData, related_name="filesystem_data", on_delete=models.CASCADE, null=True, blank=True)
+    disk = models.ForeignKey(DiskData, related_name="filesystem_data", on_delete=models.CASCADE, null=True, blank=True)
+    partition = models.ForeignKey(PartitionData, related_name="filesystem_data", on_delete=models.CASCADE, null=True, blank=True)
     label = models.CharField(null=True)
     mount_point = models.CharField()
     uuid = models.CharField(unique=True)

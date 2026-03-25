@@ -46,7 +46,7 @@ class DiskUsageDataSerializer(serializers.ModelSerializer):
 
 
 class PartitionDataSerializer(serializers.ModelSerializer):
-    filesystem_data = FilesystemDataSerializer(read_only=True)
+    filesystem_data = FilesystemDataSerializer(many=True, read_only=True)
     class Meta:
         model = PartitionData
         fields = "__all__"
@@ -54,7 +54,7 @@ class PartitionDataSerializer(serializers.ModelSerializer):
 class DiskDataSerializer(serializers.ModelSerializer):
     disk_usage = DiskUsageDataSerializer(many=True, read_only=True)
     partition_data = PartitionDataSerializer(many=True, read_only=True)
-    filesystem_data = FilesystemDataSerializer(read_only=True)
+    filesystem_data = FilesystemDataSerializer(many=True,read_only=True)
     class Meta:
         model = DiskData
         fields = "__all__"
