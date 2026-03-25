@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
-import useSavedState from './useSavedState.jsx'
 import './App.css'
 import InfoCard from './InfoCard.jsx'
-import CpuChart from './CpuChart.jsx'
-import DiskChart from './DiskChart.jsx'
-import DiskInfo from './DiskInfo.jsx'
 import Bar from './Bar.jsx'
 import SettingsModal from './SettingsModal.jsx'
-import MemoryChart from "./MemoryChart.jsx"
 import Login from './Login.jsx'
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Modal } from "@mui/material";
+import MemoryCard from './MemoryCard.jsx'
+import CpuCard from './CpuCard.jsx'
+import DisksCard from './DisksCard.jsx'
+import TimeCard from './TimeCard.jsx'
+import MemoryChartWidget from './MemoryChartWidget.jsx'
+import CpuChartWidget from './CpuChartWidget.jsx'
+import DiskChartWidget from './DiskChartWidget.jsx'
+import useSystemData from './useSystemData.jsx'
+import { refreshAPIToken, authenticatedFetch } from './utils.js'
 
 const darkTheme = createTheme({
     palette: {
@@ -21,190 +24,27 @@ const darkTheme = createTheme({
 function App() {
     // State for login
     const [token, setToken] = useState("");
-    const [loginFailed, setLoginFailed] = useState("");
     const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-    const fetchAPIToken = (username, password) => {
-        fetch("/sysmon/token/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body: JSON.stringify({
-                "username": username,
-                "password": password,
-            })
-        })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                else {
-                    setLoginFailed("Invalid username or password.");
-                    throw new Error("credentials_rejected");
-                }
-            })
-            .then(data => {
-                setToken(data.access);
-                setLoginFailed("");
-            })
-            .catch(err => {
-                if (err.message !== "credentials_rejected") {
-                    setLoginFailed("Cannot reach the server. Please try again later.")
-                }
-                console.error(err);
-            })
-    }
-    const refreshAPIToken = () => {
-        return fetch("sysmon/token/refresh/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: "include",
-        })
-            .then(response => response.json())
-            .then(data => {
-                setToken(data.access);
-            })
-            .catch(err => {
-                setToken("");
-                console.error(err);
-            })
-    }
     // State for the modal windows
-    const [memoryChartModalOpen, setMemoryChartModalOpen] = useState(false);
-    const [CpuChartModalOpen, setCpuChartModalOpen] = useState(false);
-    const [DiskChartModalOpen, setDiskChartModalOpen] = useState(false);
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-    const handleMemoryChartModalOpen = () => setMemoryChartModalOpen(true);
-    const handleMemoryChartModalClose = () => setMemoryChartModalOpen(false);
-    const handleCpuChartModalOpen = () => setCpuChartModalOpen(true);
-    const handleCpuChartModalClose = () => setCpuChartModalOpen(false);
-    const handleDiskChartModalOpen = () => setDiskChartModalOpen(true);
-    const handleDiskChartModalClose = () => setDiskChartModalOpen(false);
-    const handleSettingsModalOpen = () => setSettingsModalOpen(true);
-    const handleSettingsModalClose = () => setSettingsModalOpen(false);
     // State for the API calls
-    const [memory, setMemory] = useState([]);
-    const [cpu, setCpu] = useState([]);
-    const [disks, setDisks] = useState([]);
-    const [systemInfo, setSystemInfo] = useState({});
-    const [timePeriod, setTimePeriod] = useSavedState("sysmon_time_period", 2);
-    const [pollingFrequency, setPollingFrequency] = useSavedState("sysmon_polling_frequency", 5);
-    const [filesystemFiltering, setFilesystemFiltering] = useSavedState("sysmon_filesystem_filtering", false);
-    const [serverSideUpdateFrequency, setServerSideUpdateFrequency] = useState(10);
-    const [retentionPeriod, setRetentionPeriod] = useState(0);
-    const [settings, setSettings] = useState({})
-    const [enabledElements, setEnabledElements] = useSavedState("sysmon_enabled_elements", {
-        cpu_data: { name: "CPU data", enabled: true },
-        memory_data: { name: "Memory data", enabled: true },
-        disk_data: { name : "Disk data", enabled: true },
-        uptime: { name: "Uptime", enabled: true },
-        time: { name: "Time", enabled: true },
-        memory_chart: { name: "Memory chart", enabled: true },
-        cpu_chart: {name: "CPU chart", enabled: true },
-        disk_chart: {name: "Disk chart", enabled: true },
-})
+    const { memory, cpu, disks, systemInfo, config } = useSystemData(token);
+
     // Check if we have a valid refresh token in cookies
     useEffect(() => {
-        refreshAPIToken().finally(() => {
+        refreshAPIToken(setToken).finally(() => {
             setIsCheckingAuth(false);
         })
     }, []) // Run only once
     const loggedIn = Boolean(token);
-    useEffect(() => {
-        if (loggedIn) {
-            document.title = 'System Monitor';
-            const fetchData = (url, setter) => {
-                fetch(url, {
-                    headers: {
-                        "Authorization": "Bearer " + token,
-                    },
-                    credentials: "include",
-                })
-                    .then(response => {
-                        if (response.status === 401) {
-                            refreshAPIToken();
-                            throw new Error("Token Expired");
-                        }
-                        if (!response.ok) {
-                            throw new Error(response.statusText);
-                        }
-                        return response.json();
-                    })
-                    .then(data => { setter(data); })
-                    .catch(err => console.error(err))
-            };
-            const fetchStats = () => {
-                fetchData(`/sysmon/memory/${timePeriod}.json`, setMemory);
-                fetchData(`/sysmon/cpu/${timePeriod}.json`, setCpu);
-                fetchData(`/sysmon/disk/${timePeriod}.json`, setDisks);
-                fetchData(`/sysmon/system_info`, setSystemInfo);
-                fetchData(`/sysmon/settings`, setSettings)
-            };
-            fetchStats();
 
-
-            const intervalId = setInterval(fetchStats, pollingFrequency * 1000);
-            const refreshId = setInterval(refreshAPIToken, 60000);
-            return () => {
-                clearInterval(intervalId);
-                clearInterval(refreshId);
-            }
-        }
-    }, [token, timePeriod, pollingFrequency]);
-
-    const handleServerSideUpdateFrequencyChange =  (e) => {
-        const url = "sysmon/update_data_polling/"
-        fetch(url,
-              {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': 'Bearer ' + token,
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({
-                      'interval': e.target.value,
-                  })
-              }).catch((err) => console.log(err))
-    }
-
-    
-    const handleRetentionPeriodChange =  (e) => {
-        const url = "sysmon/settings/"
-        fetch(url,
-              {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': 'Bearer ' + token,
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({
-                      'retention_period': e.target.value * 60 * 60 * 24,
-                  })
-              }).catch((err) => console.log(err))
-    }
-    
-    const logout = () => {
-        fetch('/sysmon/logout/', {
-            headers: {
-                "Authorization": "Bearer " + token,
-            },
-            credentials: "include",
-        }).then(() => {
-            setToken("");
-        }).catch((err) => console.log(err))
-    }
+    const logout = () => authenticatedFetch(
+        token, "/sysmon/logout", 'GET',
+    ).then(() => { setToken("") })
 
     if (!loggedIn) {
         return (
-            <>
-                {loginFailed && <div className="loginError"><p>{loginFailed}</p></div>}
-                <Login action={fetchAPIToken} loginFailed={loginFailed} />
-            </>
+            <Login setToken={setToken} />
         )
     }
 
@@ -213,163 +53,61 @@ function App() {
     }
 
     const disksToDisplay = disks.filter((disk) => {
-        return filesystemFiltering ? disk.type !== 'LOOP' && !disk.device.includes('loop') : true
-    });
+        return config.filesystemFiltering ? disk.type !== 'LOOP' && !disk.device.includes('loop') : true
+    }).filter(disk => (disk.active === true));
 
     if (loggedIn) {
-        const config = {
-            timePeriod: timePeriod,
-            setTimePeriod: setTimePeriod,
-            pollingFrequency: pollingFrequency,
-            setPollingFrequency: setPollingFrequency,
-            filesystemFiltering: filesystemFiltering,
-            setFilesystemFiltering: setFilesystemFiltering,
-            serverSideUpdateFrequency: systemInfo["task_interval"],
-            handleServerSideUpdateFrequencyChange: handleServerSideUpdateFrequencyChange,
-            enabledElements: enabledElements,
-            setEnabledElements: setEnabledElements,
-            settings: settings,
-            setSettings: setSettings,
-            handleRetentionPeriodChange: handleRetentionPeriodChange,
-        }
-        let history = memory.map(memObject => new Date(memObject.timestamp));
-        let CpuHistory = Object.keys(cpu).length > 0 ?
+        let memoryHistory = memory.map(memObject => new Date(memObject.timestamp));
+        let cpuHistory = Object.keys(cpu).length > 0 ?
             Object.values(cpu).map(cpuObject => new Date(cpuObject.timestamp)) : [];
 
         return (
-            <>
-                <Bar logoutFunction={logout} handleSettingsModalOpen={handleSettingsModalOpen} />
+            <ThemeProvider theme={darkTheme}>
+                <Bar logoutFunction={logout} handleSettingsModalOpen={() => setSettingsModalOpen(true)} />
                 <div className="topContainer">
                     <div className="monitorContainer">
                         <h1>System Monitor</h1>
                         <div className="hostContainer">
                             <h2>{systemInfo.hostname}</h2>
                             <div className="chartsContainer">
-                                {enabledElements.memory_chart.enabled && (
-                                memory.length > 0 ? (
-                                    <ThemeProvider theme={darkTheme}>
-                                        <div className="chartCard" onClick={handleMemoryChartModalOpen}>
-                                            <MemoryChart memory={memory} MemoryHistory={history} height={383} />
-                                        </div>
-                                    </ThemeProvider>
-                                ) : (
-                                    <p>Awaiting more data...</p>
-                                
-                                ))}
-                                {enabledElements.cpu_chart.enabled && (
-                                    cpu.length > 0 ? (
-                                    <ThemeProvider theme={darkTheme}>
-                                        <div className="chartCard" onClick={handleCpuChartModalOpen}>
-                                            <CpuChart cpu={cpu} CpuHistory={CpuHistory} height={300} />
-                                        </div>
-                                    </ThemeProvider>
-                                ) : (
-                                    <p>Awaiting more data...</p>
-                                ))}
-                                {enabledElements.disk_chart.enabled && (
-                                    disksToDisplay.length > 0 ? (
-                                    <ThemeProvider theme={darkTheme}>
-                                        <div className="chartCard" onClick={handleDiskChartModalOpen}>
-                                            <DiskChart disks={disksToDisplay} height={300} />
-                                        </div>
-                                    </ThemeProvider>
-                                ) : (
-                                    <p>Awaiting more data...</p>
-                                ))}
+                                {config.enabledElements.memory_chart.enabled && (
+                                    <MemoryChartWidget memory={memory} memoryHistory={memoryHistory} />
+                                )}
+                                {config.enabledElements.cpu_chart.enabled && (
+                                    <CpuChartWidget cpu={cpu} cpuHistory={cpuHistory} />
+                                )}
+                                {config.enabledElements.disk_chart.enabled && (
+                                    <DiskChartWidget disk={disksToDisplay} />
+                                )}
                             </div>
                             <div className="mainContainer">
-                                {enabledElements.uptime.enabled && (
-                                <InfoCard title="System Uptime">
-                                    <p>{systemInfo['uptime']} minutes</p>
-                                </InfoCard>
+                                {config.enabledElements.uptime.enabled && (
+                                    <InfoCard title="System Uptime">
+                                        <p>{systemInfo['uptime']} minutes</p>
+                                    </InfoCard>
                                 )}
-                                {enabledElements.memory_data.enabled && (
-                                    memory.length > 0 ? (
-                                    <InfoCard title="Memory">
-                                        <p>Total memory: {(memory[memory.length - 1].total / 1024 / 1024).toFixed(2)} GB</p>
-                                        <p>Free memory: {(memory[memory.length - 1].free / 1024 / 1024).toFixed(2)} GB</p>
-                                        <p>Percent used: {((1 - (memory[memory.length - 1].free / memory[memory.length - 1].total)) * 100).toFixed(2)} %</p>
-                                    </InfoCard>
-                                ) : (
-                                    <InfoCard title="Memory">
-                                        <p>Loading...</p>
-                                    </InfoCard>
-                                ))}
-                                {enabledElements.cpu_data.enabled && (
-                                    cpu.length > 0 ? (
-                                    <InfoCard title="CPU">
-                                        <p>CPU Model: {systemInfo.cpu_model}</p>
-                                        <p>Load Average: {cpu[cpu.length - 1].avg_load}</p>
-                                        <h4>CPU Usage:</h4>
-                                        {cpu[cpu.length - 1].cpu_usage.map((item) => (
-                                            <p key={item.cpu_number}>Core {item.cpu_number}: {item.cpu_usage} %</p>
-                                        ))}
-                                    </InfoCard>
-                                ) : (
-                                    <InfoCard title="CPU">
-                                        <p>Loading...</p>
-                                    </InfoCard>
-                                ))}
-                                {enabledElements.disk_data.enabled && (
-                                <InfoCard title="Disks">
-                                    {disksToDisplay.length > 0 ? (
-                                        disksToDisplay.map((disk) => (
-                                            <DiskInfo disk={disk} key={disk.hw_id} />
-                                        ))
-                                    ) : (
-                                        <p>Loading...</p>
-                                    )}
-                                </InfoCard>
+                                {config.enabledElements.memory_data.enabled && (
+                                    <MemoryCard memory={memory} />
                                 )}
-                                {enabledElements.time.enabled && (
-                                <InfoCard title="Time">
-                                    <p>Server time: {new Date(systemInfo.system_time).toLocaleString()}</p>
-                                    <p>Server timezone: {systemInfo.system_time_zone}</p>
-                                </InfoCard>
+                                {config.enabledElements.cpu_data.enabled && (
+                                    <CpuCard cpu={cpu} systemInfo={systemInfo} />
+                                )}
+                                {config.enabledElements.disk_data.enabled && (
+                                    <DisksCard disks={disksToDisplay} />
+                                )}
+                                {config.enabledElements.time.enabled && (
+                                    <TimeCard systemInfo={systemInfo} />
                                 )}
                             </div>
-                            <Modal
-                                open={memoryChartModalOpen}
-                                onClose={handleMemoryChartModalClose}>
-                                <div className="ModalBox">
-                                    <ThemeProvider theme={darkTheme}>
-                                        {memoryChartModalOpen && (
-                                            <MemoryChart memory={memory} MemoryHistory={history} />
-                                        )}
-                                    </ThemeProvider>
-                                </div>
-                            </Modal>
-                            <Modal
-                                open={CpuChartModalOpen}
-                                onClose={handleCpuChartModalClose}>
-                                <div className="ModalBox">
-                                    <ThemeProvider theme={darkTheme}>
-                                        {CpuChartModalOpen && (
-                                            <CpuChart cpu={cpu} CpuHistory={CpuHistory} />
-                                        )}
-                                    </ThemeProvider>
-                                </div>
-                            </Modal>
-                            <Modal
-                                open={DiskChartModalOpen}
-                                onClose={handleDiskChartModalClose}>
-                                <div className="ModalBox">
-                                    <ThemeProvider theme={darkTheme}>
-                                        {DiskChartModalOpen && (
-                                            <DiskChart disks={disksToDisplay} />
-                                        )}
-                                    </ThemeProvider>
-                                </div>
-                            </Modal>
                             <SettingsModal
                                 open={settingsModalOpen}
-                                onClose={handleSettingsModalClose}
+                                onClose={() => setSettingsModalOpen(false)}
                                 config={config}
                             />
                         </div>
                     </div>
                 </div>
-            </>
+            </ThemeProvider>
         )
     }
 }

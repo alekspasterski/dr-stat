@@ -27,16 +27,16 @@ function DiskInfo({disk}) {
                     <span className="diskLabel">Read: </span><span title="reads" className="diskId">{(reads_p_s_b / 1024 / 1024).toFixed(2)} MBps</span>
                 </div>
                 <div className="infoRow">
-                    <span className="diskLabel">Size [GB]: </span><span title="reads" className="diskId">{(last.total / 1024 / 1024 / 1024).toFixed(2)}</span>
+                    <span className="diskLabel">Size [GB]: </span><span title="size" className="diskId">{(last.total / 1024 / 1024 / 1024).toFixed(2)}</span>
                 </div>
                 </>
             ) : (
                 <p>Loading data...</p>
             )}
-            {disk.filesystem_data ? (
-                <FilesystemInfo filesystem={disk.filesystem_data} />
+            {disk.filesystem_data.filter((fs) => fs.active === true).length > 0 ? (
+                <FilesystemInfo filesystem={disk.filesystem_data.filter((fs) => fs.active).at(0)} />
             ) : (
-            disk.partition_data.map((partition, index) => {
+                disk.partition_data.filter((partition) => partition.active === true).map((partition, index) => {
                 return (
                     <PartitionInfo partition={partition} index={index+1} key={partition.uuid}/>
                 )

@@ -1,7 +1,4 @@
 import { LineChart } from '@mui/x-charts/LineChart'
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Modal } from "@mui/material";
-import CssBaseline from '@mui/material/CssBaseline';
 
 function DiskChart({disks, height=0}) {
 
