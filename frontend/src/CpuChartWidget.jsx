@@ -3,7 +3,7 @@ import ChartWidget from "./ChartWidget"
 
 const CpuChartWidget = ({ cpu, cpuHistory }) => (
     <ChartWidget dataSeries={cpu}>
-        <CpuChart cpu={cpu} CpuHistory={cpuHistory} height={300} />
+        <CpuChart cpu={cpu} CpuHistory={cpuHistory} />
     </ChartWidget>
 )
 

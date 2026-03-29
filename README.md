@@ -24,10 +24,10 @@ First, you will need to set the DJANGO_SECRET environmental variable in a .env f
 mv .env.example .env
 ```
 
-Second, use `docker compose` to launch the application. 
+Second, use the start.sh script to launch the application. 
 
 ``` sh
-docker compose up --build
+start.sh -D
 ```
 
 Then you will need to create a user account to log into the monitor. You can use a superuser account or a regular account.

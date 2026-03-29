@@ -28,7 +28,7 @@ function App() {
     // State for the modal windows
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
     // State for the API calls
-    const { memory, cpu, disks, systemInfo, config } = useSystemData(token);
+    const { memory, cpu, disks, systemInfo, config } = useSystemData(token, setToken);
 
     // Check if we have a valid refresh token in cookies
     useEffect(() => {

@@ -3,7 +3,7 @@ import ChartWidget from "./ChartWidget"
 
 const DiskChartWidget = ({ disk }) => (
     <ChartWidget dataSeries={disk}>
-        <DiskChart disks={disk} height={300} />
+        <DiskChart disks={disk} />
     </ChartWidget>
 )
 

@@ -13,7 +13,7 @@ services:
     build:
       context: ./mproj
       dockerfile: Dockerfile.prod
-    command: sh -c "sleep 8 && python manage.py migrate --noinput && gunicorn monitor.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    command: sh -c "sleep 3 && python manage.py migrate --noinput && gunicorn monitor.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     ports:
       - "8000:8000"
     volumes:
@@ -32,9 +32,10 @@ services:
     build:
       context: ./mproj
       dockerfile: Dockerfile.prod
-    command: celery -A monitor worker -l info
+    command: sh -c  "sleep 15 && celery -A monitor worker -l info"
     environment:
       - PROCFS_PATH=/host/proc
+      - HOST_NAME=${HOST_NAME}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /run/udev:/run/udev:ro
@@ -43,8 +44,6 @@ services:
       - /:/host:ro
       - /sys:/sys:ro
     privileged: true
-    environment:
-      - HOST_NAME=${HOST_NAME}
     env_file:
       - .env.prod
     pid: "host"
@@ -57,7 +56,7 @@ services:
     build:
       context: ./mproj
       dockerfile: Dockerfile.prod
-    command: celery -A monitor beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: sh -c "sleep 15 && celery -A monitor beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
     volumes:
       - /etc/localtime:/etc/localtime:ro
     env_file:
