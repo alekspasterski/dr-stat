@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime, timedelta
+from functools import reduce
 import psutil
 from platform import system
 from diskinfo import DiskInfo, FileSystem
@@ -44,7 +45,7 @@ def get_memory_info() -> dict[str, int | float]:
             "used_percent": -1.0
         }
 
-def get_cpu_info() -> dict[str, str | list[float]]:
+def get_cpu_info() -> dict[str, str | list[float] | float]:
     avg_load : str = "Error"
     cpu_model : str = "Unknown CPU"
     try:
@@ -63,11 +64,13 @@ def get_cpu_info() -> dict[str, str | list[float]]:
         cpu_model = "Unknown CPU"
 
     cpu_usage : list[float] = psutil.cpu_percent(percpu=True)
+    avg_usage : float = reduce(lambda x, y: x + y, cpu_usage) / len(cpu_usage)
     
     return({
         "avg_load" : avg_load,
         "cpu_model" : cpu_model,
         "cpu_usage" : cpu_usage,
+        "avg_usage" : avg_usage,
     })
 
 def get_system_time() -> dict[str, datetime | str | timedelta | None]:
@@ -107,7 +110,6 @@ def get_filesystem_dict(fs: FileSystem | None, device: str, ps_partitions: list)
         "size": fs.get_fs_size() * 512,
     }
 
-
 def get_disk_info():
     disks = DiskInfo().get_disk_list()
     disks_return = []
@@ -139,6 +141,19 @@ def get_disk_info():
             d.update({'filesystem': d_fs})
         disks_return.append(d)
     return disks_return
+
+def get_disk_usage():
+    disk_info = get_disk_info()
+    result = {}
+    for disk in disk_info:
+        if disk.get('filesystem') and disk.get('filesystem').get('filesystem_type') != 'swap':
+            result.update({disk.get('device'): 1 - (disk['filesystem']['free_space'] / disk['size'])})
+        else:
+            if disk['partitions']:
+                for partition in disk['partitions']:
+                    if partition['filesystem'] and partition['size'] > 0 and partition.get('filesystem').get("filesystem_type") != 'swap':
+                        result[partition['name']] = 1 - (partition['filesystem']['free_space'] / partition['size'])
+    return result
 
 def get_hostname() -> str:
     return os.environ.get("HOST_NAME", "Unknown Machine")

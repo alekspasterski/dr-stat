@@ -19,6 +19,7 @@ urlpatterns = [
     path("logout/", views.logout, name="logout"),
     path("update_data_polling/", views.update_data_polling, name="update_data_polling"),
     path("settings/", views.settings, name="settings"),
+    path("metrics/", views.metrics, name="metrics"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -19,6 +19,12 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - django_static:/app/staticfiles
+      - /etc/hostname:/etc/hostname:ro
+      - /run/udev:/run/udev:ro
+      - /dev/disk:/dev/disk:ro
+      - /run/udev:/run/udev:ro
+      - /sys:/sys:ro
+      - /:/host:ro
     pid: "host"
     environment:
       - HOST_NAME=${HOST_NAME}

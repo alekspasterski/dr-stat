@@ -1,19 +1,23 @@
 from datetime import datetime, timedelta
+from http.client import responses
 from io import RawIOBase
 from types import NoneType
 from django.conf import Settings
 from django.db.models import Prefetch
-from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 from rest_framework.exceptions import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.request import Request
+from rest_framework.permissions import AllowAny
+from django.utils.encoding import smart_str
+from rest_framework import renderers
 
+from .metrics import renderMetric
 from .models import DiskUsageData, MemoryData, CpuData, DiskData, PartitionData, FilesystemUsageData, FilesystemData, Settings
-from .utils import get_cpu_info, get_system_time, get_uptime, get_hostname
+from .utils import get_cpu_info, get_disk_usage, get_memory_info, get_system_time, get_uptime, get_hostname
 from .serializer import CpuDataSerializer, MemorySerializer, SettingsSerializer, SystemInfoSerializer, DiskDataSerializer
 
 @api_view(['GET'])
@@ -202,3 +206,43 @@ def settings(request: Request) -> Response:
         return Response(
             status=status.HTTP_200_OK,
         )
+
+
+
+class PlainTextRenderer(renderers.BaseRenderer):
+    media_type = 'text/plain'
+    format = 'txt'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return smart_str(data, encoding=self.charset)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@renderer_classes([PlainTextRenderer])
+def metrics(request: Request) -> Response:
+    response_text = ""
+    from .utils import get_disk_info
+    memory = get_memory_info()
+    cpu = get_cpu_info()
+    disk_usage = get_disk_usage()
+    if memory:
+        response_text += renderMetric("Memory information",
+                                    "bytes",
+                                    "gauge",
+                                    "sysmon_memory",
+                                    {'sysmon_memory{state="free"}': str(memory['free_memory']),
+                                    'sysmon_memory{state="total"}': str(memory['total_memory'])})
+    if cpu:
+        response_text += renderMetric("CPU load",
+                                    "",
+                                    "gauge",
+                                    "sysmon_cpu_load",
+                                    {'sysmon_cpu_load{unit="load"}': str(cpu['avg_load']),
+                                    'sysmon_cpu_load{unit="percent"}': str(cpu['avg_usage'])})
+    if disk_usage:
+        response_text += renderMetric("Disk usage",
+                                    "percent",
+                                    "gauge",
+                                    "sysmon_disk_usage",
+                                    {'sysmon_disk_usage{device="'+ k +'"}': str(disk_usage[k]) for k in disk_usage})
+    return Response(data=response_text)
