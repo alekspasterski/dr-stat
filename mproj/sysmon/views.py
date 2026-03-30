@@ -221,7 +221,6 @@ class PlainTextRenderer(renderers.BaseRenderer):
 @renderer_classes([PlainTextRenderer])
 def metrics(request: Request) -> Response:
     response_text = ""
-    from .utils import get_disk_info
     memory = get_memory_info()
     cpu = get_cpu_info()
     disk_usage = get_disk_usage()
